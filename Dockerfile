@@ -14,6 +14,9 @@ RUN npm install --production
 COPY . .
 
 # Build the Next.js app
+RUN ls .
+RUN ls ./src
+RUN ls ./src/app
 RUN npm run build
 
 # Expose the port Next.js will run on
