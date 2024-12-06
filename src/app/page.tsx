@@ -1,101 +1,129 @@
-import Image from "next/image";
+'use client';
 
+import * as Carmentis from "@/carmentis-nodejs-sdk";
+import { useEffect, useState } from 'react';
+import { PageTitle } from '@/app/components/pagetitle';
+import { GetChainStatusResponse } from '@/app/interfaces/getChainStatusResponse';
+import {DynamicTableMasterBlocks} from '@/app/components/tableMasterBlocks';
+
+
+
+
+
+
+
+
+interface TableInput {
+    blockId: number;
+    length: number;
+}
+const TABLE_ROWS_LENGTH = 10;
 export default function Home() {
-  return (
-    <div className="grid grid-rows-[20px_1fr_20px] items-center justify-items-center min-h-screen p-8 pb-20 gap-16 sm:p-20 font-[family-name:var(--font-geist-sans)]">
-      <main className="flex flex-col gap-8 row-start-2 items-center sm:items-start">
-        <Image
-          className="dark:invert"
-          src="/next.svg"
-          alt="Next.js logo"
-          width={180}
-          height={38}
-          priority
-        />
-        <ol className="list-inside list-decimal text-sm text-center sm:text-left font-[family-name:var(--font-geist-mono)]">
-          <li className="mb-2">
-            Get started by editing{" "}
-            <code className="bg-black/[.05] dark:bg-white/[.06] px-1 py-0.5 rounded font-semibold">
-              src/app/page.tsx
-            </code>
-            .
-          </li>
-          <li>Save and see your changes instantly.</li>
-        </ol>
+    const [lastBlockId, setLastBlockId] = useState<number>();
+    const [nMicroBlock, setNMicroBlock] = useState<number>();
+    const [nVirtualBlockchains, setNVirtualBlocks] = useState<number>();
+    const [tableInput, setTableInput] = useState<TableInput>();
 
-        <div className="flex gap-4 items-center flex-col sm:flex-row">
-          <a
-            className="rounded-full border border-solid border-transparent transition-colors flex items-center justify-center bg-foreground text-background gap-2 hover:bg-[#383838] dark:hover:bg-[#ccc] text-sm sm:text-base h-10 sm:h-12 px-4 sm:px-5"
-            href="https://vercel.com/new?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            <Image
-              className="dark:invert"
-              src="/vercel.svg"
-              alt="Vercel logomark"
-              width={20}
-              height={20}
-            />
-            Deploy now
-          </a>
-          <a
-            className="rounded-full border border-solid border-black/[.08] dark:border-white/[.145] transition-colors flex items-center justify-center hover:bg-[#f2f2f2] dark:hover:bg-[#1a1a1a] hover:border-transparent text-sm sm:text-base h-10 sm:h-12 px-4 sm:px-5 sm:min-w-44"
-            href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            Read our docs
-          </a>
-        </div>
-      </main>
-      <footer className="row-start-3 flex gap-6 flex-wrap items-center justify-center">
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="/file.svg"
-            alt="File icon"
-            width={16}
-            height={16}
-          />
-          Learn
-        </a>
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="/window.svg"
-            alt="Window icon"
-            width={16}
-            height={16}
-          />
-          Examples
-        </a>
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://nextjs.org?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="/globe.svg"
-            alt="Globe icon"
-            width={16}
-            height={16}
-          />
-          Go to nextjs.org →
-        </a>
-      </footer>
-    </div>
-  );
+    function fetchData() {
+        Carmentis.getChainStatus().then((status: GetChainStatusResponse) => {
+            const lastBlockId = status.data.lastBlockId;
+            setLastBlockId(lastBlockId)
+            setNMicroBlock(status.data.nMicroblock)
+            setNVirtualBlocks(status.data.nFlow);
+
+            const firstBlockId = Math.max(lastBlockId - TABLE_ROWS_LENGTH + 1, 1);
+            setTableInput({
+                blockId: firstBlockId,
+                length: TABLE_ROWS_LENGTH
+            })
+
+
+        }).catch(console.error);
+    }
+    
+    useEffect(() => {
+        // update the data form the chain status
+        Carmentis.registerNodeEndpoint("https://node.testapps.carmentis.io")
+        fetchData()
+
+        // regularly update the data
+        setInterval(fetchData, 1000);
+    }, [])
+    
+    
+    
+    
+    return (
+        <>
+            <PageTitle title={"Dashboard"}></PageTitle>
+            <div className="row">
+                <div className="col-lg-0">
+                    <div className="row">
+                        <div className="col-xxl-3 col-lg-4 col-md-6 col-sm-12">
+                            <div className="card info-card sales-card">
+                                <div className="card-body"><h5 className="card-title">Current Block</h5>
+                                    <div className="d-flex align-items-center">
+                                        <div
+                                            className="card-icon rounded-circle d-flex align-items-center justify-content-center">
+                                            <i className="bi bi-box"></i></div>
+                                        <div className="ps-3">
+                                            <h6 id="ind0">{lastBlockId}</h6>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <div className="col-xxl-3 col-lg-4 col-md-6 col-sm-12">
+                            <div className="card info-card sales-card">
+                                <div className="card-body"><h5 className="card-title">Micro Blocks</h5>
+                                    <div className="d-flex align-items-center">
+                                        <div
+                                            className="card-icon rounded-circle d-flex align-items-center justify-content-center">
+                                            <i className="bi bi-boxes"></i></div>
+                                        <div className="ps-3"><h6 id="ind1">{nMicroBlock}</h6></div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <div className="col-xxl-3 col-lg-4 col-md-6 col-sm-12">
+                            <div className="card info-card sales-card">
+                                <div className="card-body"><h5 className="card-title">Virtual Blockchains</h5>
+                                    <div className="d-flex align-items-center">
+                                        <div
+                                            className="card-icon rounded-circle d-flex align-items-center justify-content-center">
+                                            <i className="bi bi-layers"></i></div>
+                                        <div className="ps-3"><h6 id="ind2">
+                                            { nVirtualBlockchains }
+                                        </h6></div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <div className="col-xxl-3 col-lg-4 col-md-6 col-sm-12">
+                            <div className="card info-card sales-card">
+                                <div className="card-body"><h5 className="card-title">Throughput</h5>
+                                    <div className="d-flex align-items-center">
+                                        <div
+                                            className="card-icon rounded-circle d-flex align-items-center justify-content-center">
+                                            <i className="bi bi-speedometer2"></i></div>
+                                        <div className="ps-3"><h6 id="ind3">0.00</h6><span
+                                            className="text-muted small pt-2 ps-1">events per second</span>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    { tableInput &&
+                        <div className="card">
+                            <div className="card-body"><h5 className="card-title">Last Blocks</h5>
+                                <DynamicTableMasterBlocks></DynamicTableMasterBlocks>
+                            </div>
+                        </div>
+                    }
+                </div>
+            </div>
+        </>
+    
+    );
 }
