@@ -1,11 +1,15 @@
 'use client';
 
 import * as Carmentis from "@/carmentis-nodejs-sdk";
-import { useEffect, useState } from 'react';
+import { useState } from 'react';
 import { PageTitle } from '@/app/components/pagetitle';
 import { GetChainStatusResponse } from '@/app/interfaces/getChainStatusResponse';
 import {DynamicTableMasterBlocks} from '@/app/components/tableMasterBlocks';
-
+import useSWR from "swr";
+import Skeleton from "react-loading-skeleton";
+import * as sdk from '@cmts-dev/carmentis-sdk/client';
+import {useAtomValue} from "jotai";
+import {networkAtom} from "@/atoms/network.atom";
 
 
 
@@ -23,8 +27,17 @@ export default function Home() {
     const [nMicroBlock, setNMicroBlock] = useState<number>();
     const [nVirtualBlockchains, setNVirtualBlocks] = useState<number>();
     const [tableInput, setTableInput] = useState<TableInput>();
+    Carmentis.registerNodeEndpoint("https://node.testapps.carmentis.io")
+    const network = useAtomValue(networkAtom);
+    sdk.blockchain.blockchainQuery.setNode(network);
+    sdk.blockchain.blockchainQuery.getChainStatus().then(console.log)
+    sdk.blockchain.blockchainQuery.getAccounts().then(console.log)
 
-    function fetchData() {
+
+
+    /*
+    const {data, isLoading, error} = useSWR(async () => {
+        /*
         Carmentis.getChainStatus().then((status: GetChainStatusResponse) => {
             const lastBlockId = status.data.lastBlockId;
             setLastBlockId(lastBlockId)
@@ -39,20 +52,16 @@ export default function Home() {
 
 
         }).catch(console.error);
-    }
-    
-    useEffect(() => {
-        // update the data form the chain status
-        Carmentis.registerNodeEndpoint("https://node.testapps.carmentis.io")
-        fetchData()
 
-        // regularly update the data
-        setInterval(fetchData, 1000);
-    }, [])
+    })
+
+     */
+
+    const {data, isLoading, error} = useSWR(null);
+
+    console.log(data, isLoading, error)
     
-    
-    
-    
+    if (!data || isLoading) return <Skeleton/>
     return (
         <>
             <PageTitle title={"Dashboard"}></PageTitle>

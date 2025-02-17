@@ -9,15 +9,22 @@
     "lint": "next lint"
   },
   "dependencies": {
+    "@cmts-dev/carmentis-sdk": "^0.1.2",
+    "@emotion/react": "^11.14.0",
+    "@emotion/styled": "^11.14.0",
     "@font/nunito": "^1.0.3",
+    "@mui/material": "^6.4.3",
+    "axios": "^1.7.9",
     "bootstrap": "^5.3.3",
     "bootstrap-icons": "^1.11.3",
+    "jotai": "^2.12.0",
     "next": "^15.0.4",
     "react": "^18.3.1",
     "react-dom": "^18",
     "react-loading-skeleton": "^3.5.0",
     "react-router-dom": "^7.0.2",
-    "swiper": "^11.1.15"
+    "swiper": "^11.1.15",
+    "swr": "^2.3.2"
   },
   "devDependencies": {
     "@types/node": "^20",

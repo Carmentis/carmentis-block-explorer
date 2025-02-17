@@ -1,6 +1,69 @@
+'use client';
+
 import {PageTitle} from "@/app/components/pagetitle";
+import {useAtomValue} from "jotai/index";
+import {networkAtom} from "@/atoms/network.atom";
+import * as sdk from "@cmts-dev/carmentis-sdk/client";
+import useSWR from "swr";
+import {Card, CardContent} from "@mui/material";
+import TableComponent from "@/components/table.component";
+import Skeleton from "react-loading-skeleton";
+
+
+
+const fetcher = async () =>  {
+    const accountsHash : string[] = await sdk.blockchain.blockchainQuery.getAccounts();
+    const accounts = [];
+    for (let i = 0; i < accountsHash.length; i++) {
+        const accountHash = accountsHash[i];
+        const accountData = await sdk.blockchain.blockchainQuery.getAccountState(accountHash);
+        accounts.push(
+            {
+                ...accountData,
+                hash: accountHash
+            }
+        );
+    }
+    return accounts;
+}
 
 export default function Accounts() {
+    const network = useAtomValue(networkAtom);
+    sdk.blockchain.blockchainQuery.setNode(network);
+    sdk.blockchain.blockchainQuery.getChainStatus().then(console.log)
+
+    const {data,error,isLoading} = useSWR(
+        ['getAccounts'], fetcher
+    );
+
+    console.log(data, error,isLoading)
+
+    const accountExtractor = (data:{balance: number, hash: string, height: number}) => {
+        return [
+            { head: "Hash", value: <>{data.hash}</> },
+            { head: "Balance", value: <>{data.balance}</> },
+            { head: "# Transactions", value: <>{data.height}</> }
+        ]
+    }
+
+    if (!data) return <Skeleton/>
+    return <Card>
+        <CardContent>
+            <TableComponent
+                data={data}
+                extractor={accountExtractor}/>
+        </CardContent>
+    </Card>
+    /*
+    sdk.blockchain.blockchainQuery.getAccounts()
+        .then(accounts => {
+            accounts.map(accountHash => {
+                sdk.blockchain.blockchainQuery.getAccountState(accountHash).then(console.log)
+            })
+        })
+
+
+
     return (
         <>
             <PageTitle title={`Applications Explorer`}/>
@@ -53,4 +116,6 @@ export default function Accounts() {
             </section>
         </>
     );
+
+     */
 }

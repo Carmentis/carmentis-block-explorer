@@ -1,5 +1,5 @@
 #
-name: Create and publish a general documentation docker image
+name: Create and publish the Themis explorer docker image
 
 # Configures this workflow to run every time a change is pushed to the branch called `release`.
 on:
@@ -9,7 +9,7 @@ on:
 # Defines two custom environment variables for the workflow. These are used for the Container registry domain, and a name for the Docker image that this workflow builds.
 env:
   REGISTRY: ghcr.io
-  IMAGE_NAME: explorer.themis.carmentis
+  EXPLORER_IMAGE_NAME: ghcr.io/carmentis/explorer:latest
 
 # There is a single job in this workflow. It's configured to run on the latest available version of Ubuntu.
 jobs:
@@ -41,33 +41,4 @@ jobs:
         with:
           context: .
           push: true
-          tags: ghcr.io/carmentis/explorer.themis.carmentis:latest
-
-
-      - name: Stop the running container if any
-        uses: appleboy/ssh-action@v0.1.10
-        with:
-          host: ${{ vars.TESTAPPS_HOST }}
-          username: ${{ vars.TESTAPPS_USER }}
-          port: ${{ vars.TESTAPPS_PORT }}
-          key: ${{ secrets.TESTAPPS_SSH_PRIVATE_KEY }}
-          script: "docker ps -q --filter 'name=carmentis-themis-explorer' | xargs --no-run-if-empty docker rm -f"
-
-      - name: Download the latest image version
-        uses: appleboy/ssh-action@v0.1.10
-        with:
-          host: ${{ vars.TESTAPPS_HOST }}
-          username: ${{ vars.TESTAPPS_USER }}
-          port: ${{ vars.TESTAPPS_PORT }}
-          key: ${{ secrets.TESTAPPS_SSH_PRIVATE_KEY }}
-          script: "docker pull ghcr.io/carmentis/explorer.themis.carmentis:latest"
-
-
-      - name: Run the latest version of the image
-        uses: appleboy/ssh-action@v0.1.10
-        with:
-          host: ${{ vars.TESTAPPS_HOST }}
-          username: ${{ vars.TESTAPPS_USER }}
-          port: ${{ vars.TESTAPPS_PORT }}
-          key: ${{ secrets.TESTAPPS_SSH_PRIVATE_KEY }}
-          script: "docker run --name carmentis-themis-explorer -d -p 6789:80 ghcr.io/carmentis/explorer.themis.carmentis:latest"
+          tags: ${{ env.EXPLORER_IMAGE_NAME }}

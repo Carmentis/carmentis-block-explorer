@@ -1,13 +1,19 @@
 'use client'
 
-import {useState} from "react";
+import {useEffect, useState} from "react";
 import { useRouter } from 'next/navigation';
 import Image from "next/image";
+import {useAtom, useAtomValue} from 'jotai'
+import {networkAtom} from "@/atoms/network.atom";
+import {Input, TextField} from "@mui/material";
+import useSWR from "swr";
+import {NodeConnectionStatus} from "@/app/components/connection-status";
 
 
 export function Navbar() {
     const router = useRouter();
     const  [searchQuery, setSearchQuery] = useState('');
+    const [network, setNetwork] = useAtom(networkAtom);
 
     function OnSubmit(event: React.FormEvent<HTMLFormElement>) {
         // stop the propagation of the form event
@@ -51,25 +57,10 @@ export function Navbar() {
                 </form>
             </div>
             <nav className="header-nav ms-auto">
-                <ul className="d-flex align-items-center">
-                    <li className="nav-item d-block d-lg-none">
-                        <a className="nav-link nav-icon search-bar-toggle"
-                                                                  href="#"><i className="bi bi-search"></i></a></li>
-                    <li className="nav-item dropdown pe-4" id="network"><a
-                        className="nav-link nav-profile d-flex align-items-center pe-0" href="#"
-                        data-bs-toggle="dropdown"><i className="bi bi-hdd-network"></i> <span id="network-title"
-                                                                                              className="d-none d-md-block dropdown-toggle ps-2">Themis (testnet)</span></a>
-                        <ul className="dropdown-menu dropdown-menu-end dropdown-menu-arrow profile">
-                            <li className="dropdown-header"><span>Network</span></li>
-                            <li>
-                                <hr className="dropdown-divider" />
-                            </li>
-                            <li><a className="dropdown-item d-flex align-items-center" href="/get-started"><i
-                                className="bi bi-box-arrow-up-right"></i> <span>Go to mainnet</span></a></li>
-                        </ul>
-                    </li>
-                </ul>
+                <TextField value={network} size={"small"} label={"Node"} onChange={e => setNetwork(e.target.value)}/>
+                <NodeConnectionStatus/>
             </nav>
         </div>
     );
 }
+
