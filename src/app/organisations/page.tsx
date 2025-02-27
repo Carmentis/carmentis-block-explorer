@@ -1,13 +1,14 @@
 'use client';
 
-import {PageTitle} from "@/app/components/pagetitle";
 import * as sdk from "@cmts-dev/carmentis-sdk/client";
 import Skeleton from "react-loading-skeleton";
 import {Card, CardContent} from "@mui/material";
-import TableComponent from "@/components/table.component";
+import TableComponent, {DynamicTableComponent} from "@/components/table.component";
 import {useAtomValue} from "jotai/index";
 import {networkAtom} from "@/atoms/network.atom";
 import useSWR from "swr";
+import {useEffect} from "react";
+import {useRouter} from "next/navigation";
 
 const fetcher = async () =>  {
     const organisationsHash : string[] = await sdk.blockchain.blockchainQuery.getOrganizations();
@@ -26,50 +27,45 @@ const fetcher = async () =>  {
     return organisations;
 }
 
-export default function Accounts() {
-    const accountExtractor = (data:{balance: number, hash: string}) => {
-        return [
-            { head: "Hash", value: <>{data.hash}</> },
-            { head: "Balance", value: <>{data.balance}</> },
-        ]
-    }
-
+export default function OrganisationsPage() {
+    const router = useRouter();
     const network = useAtomValue(networkAtom);
+    sdk.blockchain.blockchainCore.setNode(network);
     sdk.blockchain.blockchainQuery.setNode(network);
-    sdk.blockchain.blockchainQuery.getChainStatus().then(console.log)
 
-    const {data,error,isLoading} = useSWR(
+    const {data, mutate} = useSWR(
         ['getOrganisations'], fetcher
     );
 
-    console.log(data, error,isLoading)
+    const header = ["Name", "Location", "Website", "Public Key", "Balance"]
+    const renderRow = async (row : {hash: string, balance: number}, index: number) => {
+        // load the organisation
+        const vb = new sdk.blockchain.organizationVb(row.hash);
+        await vb.load()
+        const publicKey = vb.getPublicKey();
+        const desc = await vb.getDescription();
+        return [
+            <>{desc.name}</>,
+            <>{`${desc.city} (${desc.countryCode})`}</>,
+            <>{desc.website}</>,
+            <>{publicKey}</>,
+            <>{row.balance}</>
+        ]
+    }
+
+    useEffect(() => {
+        mutate()
+    }, [network]);
 
     if (!data) return <Skeleton/>
     return <Card>
         <CardContent>
-            <TableComponent
+            <DynamicTableComponent
+                header={header}
                 data={data}
-                extractor={accountExtractor}/>
+                renderRow={renderRow}
+                onRowClicked={(row) => router.push(`/organisations/${row.hash}`)}
+            />
         </CardContent>
     </Card>
-    /*
-    return (
-        <>
-            <PageTitle title={`Organisations Explorer`}/>
-            <section className="section dashboard">
-                <div className="row">
-                    <div className="col-lg-0">
-                        <div className="card">
-                            <div className="card-body"><h5 className="card-title">Organizations</h5>
-                                <table id="organizations" className="table"></table>
-                                <nav id="pagination"></nav>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            </section>
-        </>
-    );
-
-     */
 }

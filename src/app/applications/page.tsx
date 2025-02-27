@@ -2,11 +2,14 @@
 
 import * as sdk from "@cmts-dev/carmentis-sdk/client";
 import Skeleton from "react-loading-skeleton";
-import {Card, CardContent} from "@mui/material";
-import TableComponent from "@/components/table.component";
+import {Card, CardContent, Tooltip} from "@mui/material";
+import {DynamicTableComponent} from "@/components/table.component";
 import {useAtomValue} from "jotai/index";
 import {networkAtom} from "@/atoms/network.atom";
 import useSWR from "swr";
+import {useEffect} from "react";
+import Link from "next/link";
+import {useRouter} from "next/navigation";
 
 const fetcher = async () =>  {
     const applications : string[] = await sdk.blockchain.blockchainQuery.getApplications();
@@ -15,6 +18,50 @@ const fetcher = async () =>  {
 }
 
 export default function Applications() {
+    const router = useRouter();
+    const network = useAtomValue(networkAtom);
+    sdk.blockchain.blockchainCore.setNode(network);
+    sdk.blockchain.blockchainQuery.setNode(network);
+
+    const {data, mutate} = useSWR(
+        ['getApplications'], fetcher
+    );
+
+    const header = ["Name",  "Website", "Version", "Organisation"]
+    const renderRow = async (row : string, index: number) => {
+        const vb = new sdk.blockchain.applicationVb(row);
+        await vb.load()
+        const lastVersion = vb.getHeight();
+        const organisationVb = await vb.getOrganizationVb();
+        const desc = await vb.getDescription(lastVersion-1)
+        const orgDesc = await organisationVb.getDescription();
+        return [
+            <Tooltip title={desc.description ?? 'No description provided.'}>
+                <p>{desc.name}</p>
+            </Tooltip>,
+            <>{desc.homepageUrl}</>,
+            <>{lastVersion}</>,
+            <Link href={`/organisations/${organisationVb.id}`}>{orgDesc.name}</Link>
+        ]
+    }
+
+    useEffect(() => {
+        mutate();
+    }, [network]);
+
+    if (!data) return <Skeleton/>
+    return <Card>
+        <CardContent>
+            <DynamicTableComponent
+                header={header}
+                data={data}
+                renderRow={renderRow}
+                onRowClicked={(hash) => router.push(`/applications/${hash}`)}
+            />
+        </CardContent>
+    </Card>
+
+    /*
     const accountExtractor = (data:string) => {
         return [
             { head: "Hash", value: <>{data}</> },
@@ -38,6 +85,8 @@ export default function Applications() {
                 extractor={accountExtractor}/>
         </CardContent>
     </Card>
+
+     */
     /*
     return (
         <>

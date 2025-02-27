@@ -5,15 +5,24 @@ import { useRouter } from 'next/navigation';
 import Image from "next/image";
 import {useAtom, useAtomValue} from 'jotai'
 import {networkAtom} from "@/atoms/network.atom";
-import {Input, TextField} from "@mui/material";
+import {Button, Input, TextField} from "@mui/material";
 import useSWR from "swr";
 import {NodeConnectionStatus} from "@/app/components/connection-status";
+import * as net from "node:net";
+import {blockchain} from "../../../../carmentis-core";
 
 
 export function Navbar() {
     const router = useRouter();
     const  [searchQuery, setSearchQuery] = useState('');
     const [network, setNetwork] = useAtom(networkAtom);
+    const [networkField, setNetworkField] = useState(network);
+
+
+    function saveNetwork() {
+        setNetwork(networkField)
+        blockchain.blockchainCore.setNode(networkField)
+    }
 
     function OnSubmit(event: React.FormEvent<HTMLFormElement>) {
         // stop the propagation of the form event
@@ -56,8 +65,9 @@ export function Navbar() {
                     <button type="submit" title="Search"><i className="bi bi-search"></i></button>
                 </form>
             </div>
-            <nav className="header-nav ms-auto">
-                <TextField value={network} size={"small"} label={"Node"} onChange={e => setNetwork(e.target.value)}/>
+            <nav className="header-nav ms-auto space-x-2">
+                <Button variant={"contained"} onClick={saveNetwork} hidden={network === networkField}>Update</Button>
+                <TextField value={networkField} size={"small"} label={"Node"} onChange={e => setNetworkField(e.target.value)}/>
                 <NodeConnectionStatus/>
             </nav>
         </div>
