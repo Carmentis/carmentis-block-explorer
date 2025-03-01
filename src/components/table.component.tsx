@@ -89,7 +89,7 @@ export default function TableComponent<T>(
 export type DynamicTableComponent<T> = {
     header: string[],
     data: T[],
-    noWrap?: boolean,
+    noWrapCell?: boolean,
     renderRow: (row: T, index: number) => Promise<ReactNode[]>,
     onRowClicked: (row: T, index: number) => void
 };
@@ -105,9 +105,9 @@ export type DynamicTableComponent<T> = {
  * @return {JSX.Element} The rendered table or an empty state message if no data is provided.
  */
 export function DynamicTableComponent<T>(
-    {header, data, renderRow, onRowClicked, noWrap}: DynamicTableComponent<T>
+    {header, data, renderRow, onRowClicked, noWrapCell}: DynamicTableComponent<T>
 ) {
-    noWrap = typeof noWrap === "undefined" ? false : noWrap;
+    noWrapCell = typeof noWrapCell === "undefined" ? false : noWrapCell;
     let content = <Typography>No entry found</Typography>;
     if (data.length !== 0) {
         content = <table className="w-full min-w-max table-auto text-left">
@@ -135,7 +135,7 @@ export function DynamicTableComponent<T>(
                     className={"cursor-pointer hover:bg-gray-50 [&>td]:py-2"}
                     onClick={() => onRowClicked && onRowClicked(row, index)}
                 >
-                    <DynamicRow row={row} index={index} renderRow={renderRow} numberOfCols={header.length} noWrap={noWrap} />
+                    <DynamicRow row={row} index={index} renderRow={renderRow} numberOfCols={header.length} noWrap={noWrapCell} />
                 </tr>
             ))}
 

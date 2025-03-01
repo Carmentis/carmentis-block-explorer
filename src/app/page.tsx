@@ -1,9 +1,7 @@
 'use client';
 
-import * as Carmentis from "@/carmentis-nodejs-sdk";
 import {PropsWithChildren, useState} from 'react';
 import { PageTitle } from '@/app/components/pagetitle';
-import {DynamicTableMasterBlocks} from '@/app/components/tableMasterBlocks';
 import useSWR from "swr";
 import Skeleton from "react-loading-skeleton";
 import * as sdk from '@cmts-dev/carmentis-sdk/client';
@@ -15,12 +13,10 @@ import {Card, CardContent} from "@mui/material";
 
 
 
-let height = 200;
-
 async function loadCurrentHeight() {
     const status = await sdk.blockchain.blockchainQuery.getChainStatus()
-    height = height += 1;
-    return {lastBlockHeight: height};
+    console.log(status)
+    return status
 }
 
 
@@ -47,21 +43,28 @@ function LatestBlocks() {
     if (isLoading || !data) return <Skeleton/>
     const masterBlockIds = [];
     const lastBlockHeight = data.lastBlockHeight;
-    for (let i = lastBlockHeight; i > lastBlockHeight - LIMIT; i--) {
+    for (let i = lastBlockHeight; i > Math.max(lastBlockHeight - LIMIT, 0); i--) {
         masterBlockIds.push(i);
     }
 
     async function renderRow( blockHeight: number ) {
+        const blockData = await sdk.blockchain.blockchainQuery.getBlockInfo(blockHeight);
+        console.log(blockData)
         return [
-            <td key={blockHeight}>{blockHeight}</td>
+            <td>{blockHeight}</td>,
+            <td>{blockData.status === 0 ? "Anchored" : "Running"}</td>,
+            <td>{blockData.size}</td>,
+            <td>{blockData.nMicroblock}</td>,
+            <td>{blockData.proposerNode}</td>,
+            <td>{blockData.timestamp}</td>,
         ]
     }
 
     return <LatestBlocksDisplay>
         <DynamicTableComponent
             key={lastBlockHeight}
-            header={["Id"]}
-            noWrap={true}
+            header={["Block", "Status", "Size", "#Sections", "Proposer", "Proposed at"]}
+            noWrapCell={true}
             data={masterBlockIds}
             renderRow={renderRow}
             onRowClicked={(h) => {router.push(`/explorer/masterblock/${h}`)}}
