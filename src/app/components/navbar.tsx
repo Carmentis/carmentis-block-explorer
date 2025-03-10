@@ -3,13 +3,11 @@
 import {useEffect, useState} from "react";
 import { useRouter } from 'next/navigation';
 import Image from "next/image";
-import {useAtom, useAtomValue} from 'jotai'
+import {useAtom,} from 'jotai'
 import {networkAtom} from "@/atoms/network.atom";
-import {Button, Input, TextField} from "@mui/material";
-import useSWR from "swr";
+import {Button,  TextField} from "@mui/material";
 import {NodeConnectionStatus} from "@/app/components/connection-status";
-import * as net from "node:net";
-import {blockchain} from "../../../../carmentis-core";
+import * as sdk from "@cmts-dev/carmentis-sdk/client";
 
 
 export function Navbar() {
@@ -21,7 +19,7 @@ export function Navbar() {
 
     function saveNetwork() {
         setNetwork(networkField)
-        blockchain.blockchainCore.setNode(networkField)
+        sdk.blockchain.blockchainCore.setNode(networkField)
     }
 
     function OnSubmit(event: React.FormEvent<HTMLFormElement>) {
