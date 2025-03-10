@@ -21,13 +21,17 @@ export function Sidebar() {
                     <ActiveLink href="/accounts" className="side-menu nav-link" name="Accounts" icon="bi-person"/>
                 </li>
                 <li className="nav-item">
-                    <ActiveLink href="/organisations" className="side-menu nav-link" name="Organisations" icon="bi-building"/>
+                    <ActiveLink href="/organisations" className="side-menu nav-link" name="Organisations"
+                                icon="bi-building"/>
                 </li>
                 <li className="nav-item">
                     <ActiveLink href="/nodes" className="side-menu nav-link" name="Nodes" icon="bi-cloud"/>
                 </li>
                 <li className="nav-item">
                     <ActiveLink href="/applications" className="side-menu nav-link" name="Applications" icon="bi-grid"/>
+                </li>
+                <li className="nav-item">
+                    <ActiveLink href="/oracles" className="side-menu nav-link" name="Oracles" icon="bi-grid"/>
                 </li>
 
                 <li className="nav-heading">Other tools</li>
