@@ -1,11 +1,11 @@
 'use client'
 
-import {useEffect, useState} from "react";
-import { useRouter } from 'next/navigation';
+import {useState} from "react";
+import {useRouter} from 'next/navigation';
 import Image from "next/image";
 import {useAtom,} from 'jotai'
 import {networkAtom} from "@/atoms/network.atom";
-import {Button,  TextField} from "@mui/material";
+import {Button, TextField} from "@mui/material";
 import {NodeConnectionStatus} from "@/app/components/connection-status";
 import * as sdk from "@cmts-dev/carmentis-sdk/client";
 

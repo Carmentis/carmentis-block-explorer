@@ -1,25 +1,26 @@
 'use client';
 
 import * as sdk from "@cmts-dev/carmentis-sdk/client";
+import {AccountState} from "@cmts-dev/carmentis-sdk/client";
 import Skeleton from "react-loading-skeleton";
 import {Card, CardContent} from "@mui/material";
-import TableComponent, {DynamicTableComponent} from "@/components/table.component";
+import {DynamicTableComponent} from "@/components/table.component";
 import {useAtomValue} from "jotai/index";
 import {networkAtom} from "@/atoms/network.atom";
 import useSWR from "swr";
 import {useEffect} from "react";
 import {useRouter} from "next/navigation";
 
+
 const fetcher = async () =>  {
     const organisationsHash : string[] = await sdk.blockchain.blockchainQuery.getOrganizations();
     const organisations = [];
     for (let i = 0; i < organisationsHash.length; i++) {
         const organisationHash = organisationsHash[i];
-        console.log(i, organisationsHash[i])
-        const organisationAccountData = await sdk.blockchain.blockchainQuery.getAccountState(organisationHash);
+        const organisationAccountData = await sdk.blockchain.blockchainQuery.getAccountStateObject(organisationHash);
         organisations.push(
             {
-                ...organisationAccountData,
+                account: organisationAccountData,
                 hash: organisationHash
             }
         );
@@ -38,18 +39,17 @@ export default function OrganisationsPage() {
     );
 
     const header = ["Name", "Location", "Website", "Public Key", "Balance"]
-    const renderRow = async (row : {hash: string, balance: number}, index: number) => {
+    const renderRow = async (row : {hash: string, account: AccountState}, index: number) => {
         // load the organisation
         const vb = new sdk.blockchain.organizationVb(row.hash);
         await vb.load()
-        const publicKey = vb.getPublicKey();
-        const desc = await vb.getDescription();
+        const desc = await vb.getDescriptionObject();
         return [
-            <>{desc.name}</>,
-            <>{`${desc.city} (${desc.countryCode})`}</>,
-            <>{desc.website}</>,
-            <>{publicKey}</>,
-            <>{row.balance}</>
+            <>{desc.getName()}</>,
+            <>{desc.getFormattedLocation()}</>,
+            <>{desc.getWebsite()}</>,
+            <>{desc.getPublicKey()}</>,
+            <>{row.account.getBalance()}</>
         ]
     }
 

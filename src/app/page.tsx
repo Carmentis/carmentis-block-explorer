@@ -1,7 +1,7 @@
 'use client';
 
-import {PropsWithChildren, useState} from 'react';
-import { PageTitle } from '@/app/components/pagetitle';
+import {PropsWithChildren} from 'react';
+import {PageTitle} from '@/app/components/pagetitle';
 import useSWR from "swr";
 import Skeleton from "react-loading-skeleton";
 import * as sdk from '@cmts-dev/carmentis-sdk/client';
@@ -10,7 +10,6 @@ import {networkAtom} from "@/atoms/network.atom";
 import {DynamicTableComponent} from "@/components/table.component";
 import {useRouter} from "next/navigation";
 import {Card, CardContent} from "@mui/material";
-
 
 
 async function loadCurrentHeight() {
@@ -48,15 +47,14 @@ function LatestBlocks() {
     }
 
     async function renderRow( blockHeight: number ) {
-        const blockData = await sdk.blockchain.blockchainQuery.getBlockInfo(blockHeight);
-        console.log(blockData)
+        const blockData = await sdk.blockchain.blockchainQuery.getBlockInfoObject(blockHeight);
         return [
-            <td>{blockHeight}</td>,
-            <td>{blockData.status === 0 ? "Anchored" : "Running"}</td>,
-            <td>{blockData.size}</td>,
-            <td>{blockData.nMicroblock}</td>,
-            <td>{blockData.proposerNode}</td>,
-            <td>{blockData.timestamp}</td>,
+            <td key={0}>{blockHeight}</td>,
+            <td key={1}>{blockData.isAnchored() ? "Anchored" : "Running"}</td>,
+            <td key={2}>{blockData.getSize()}</td>,
+            <td key={3}>{blockData.getNumberOfMicroblocks()}</td>,
+            <td key={4}>{blockData.getProposerNode()}</td>,
+            <td key={5}>{blockData.getProposedAt().toLocaleString()}</td>,
         ]
     }
 

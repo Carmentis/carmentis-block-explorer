@@ -1,4 +1,4 @@
-import { MasterBlock } from '@/app/interfaces/masterBlock';
+import {MasterBlock} from '@/app/interfaces/masterBlock';
 
 export interface MasterBlockList {
     id: number,

@@ -1,4 +1,4 @@
-import { Hash } from '@/app/interfaces/hash';
+import {Hash} from '@/app/interfaces/hash';
 
 export interface MasterBlock {
     id: number;

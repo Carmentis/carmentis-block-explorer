@@ -1,44 +1,43 @@
 'use client';
 
 import * as sdk from "@cmts-dev/carmentis-sdk/client";
+import {BlockchainQuery, BlockchainQueryFabric} from "@cmts-dev/carmentis-sdk/client";
 import Skeleton from "react-loading-skeleton";
-import {Card, CardContent, Tooltip, Typography} from "@mui/material";
+import {Card, CardContent, Typography} from "@mui/material";
 import {DynamicTableComponent} from "@/components/table.component";
 import {useAtomValue} from "jotai/index";
 import {networkAtom} from "@/atoms/network.atom";
 import useSWR from "swr";
 import {useEffect} from "react";
-import Link from "next/link";
 import {useRouter} from "next/navigation";
 
-const fetcher = async () =>  {
-    const oracles : string[] = await sdk.blockchain.blockchainQuery.getOracles();
-
+const fetcher = async (input: [string, BlockchainQuery]) =>  {
+    const client = input[1];
+    const oracles : string[] = await client.getOraclesHash();
     return oracles;
 }
 
 export default function Oracles() {
     const router = useRouter();
     const network = useAtomValue(networkAtom);
-    sdk.blockchain.blockchainCore.setNode(network);
-    sdk.blockchain.blockchainQuery.setNode(network);
+    const client = BlockchainQueryFabric.build(network);
 
     const {data, mutate} = useSWR(
-        ['getOracles'], fetcher
+        ['getOracles', client], fetcher
     );
 
-    const renderRow = async (row : string, index: number) => {
+    const renderRow = async (row : string) => {
         const vb = new sdk.blockchain.oracleVb(row);
         await vb.load()
         const height = vb.getHeight();
-        const desc = await vb.getDescription();
+        const desc = await vb.getDescriptionObject();
         const organisationVb = await vb.getOrganizationVb();
-        const orgDesc = await organisationVb.getDescription();
+        const orgDesc = await organisationVb.getDescriptionObject();
         return [
-            <Typography>{desc.name}</Typography>,
-            <Typography>{row}</Typography>,
-            <Typography>{height-1}</Typography>,
-            <Typography>{orgDesc.name}</Typography>
+            <Typography key={0}>{desc.getName()}</Typography>,
+            <Typography key={1}>{row}</Typography>,
+            <Typography key={2}>{height-1}</Typography>,
+            <Typography key={3}>{orgDesc.getName()}</Typography>
         ]
     }
 

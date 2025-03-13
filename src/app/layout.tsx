@@ -23,6 +23,7 @@ const SWR_CONFIG = {
 }
 
 
+
 export default function RootLayout(
     {children}: Readonly<{ children: React.ReactNode; }>
 ) {

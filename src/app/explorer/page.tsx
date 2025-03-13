@@ -1,7 +1,7 @@
 'use client'
 
 
-import { PageTitle } from '@/app/components/pagetitle';
+import {PageTitle} from '@/app/components/pagetitle';
 import {useEffect, useRef, useState} from "react";
 import {DynamicTableMasterBlocks} from "@/app/components/tableMasterBlocks";
 import *  as Carmentis from '@/carmentis-nodejs-sdk';

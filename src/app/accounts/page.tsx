@@ -5,9 +5,9 @@ import {networkAtom} from "@/atoms/network.atom";
 import * as sdk from "@cmts-dev/carmentis-sdk/client";
 import useSWR from "swr";
 import {Card, CardContent} from "@mui/material";
-import TableComponent, {DynamicTableComponent} from "@/components/table.component";
+import {DynamicTableComponent} from "@/components/table.component";
 import Skeleton from "react-loading-skeleton";
-
+import {useRouter} from "next/navigation";
 
 
 const fetcher = async () =>  {
@@ -24,31 +24,36 @@ const fetcher = async () =>  {
         );
     }
     return accounts;
+
+
 }
 
 export default function Accounts() {
+    // set the node parameters
     const network = useAtomValue(networkAtom);
-    console.log(`setNode: ${network}`)
-    sdk.blockchain.blockchainCore.setNode(network);
     sdk.blockchain.blockchainQuery.setNode(network);
+    sdk.blockchain.blockchainCore.setNode(network);
+    const router = useRouter();
 
-    const {data} = useSWR(
+    const {data, error} = useSWR(
         ['getAccounts'], fetcher
     );
-    const renderRow = async (row : {hash: string, balance: number}, index: number) => {
+    const renderRow = async (row : {hash: string, balance: number}) => {
         const vb = new sdk.blockchain.accountVb(row.hash);
         await vb.load()
-        console.log(vb)
+        const pk = vb.getPublicKey();
         return [
-            <>{vb.getPublicKey()}</>,
-            <>{row.balance}</>
+            <td key={0} onClick={() => router.push(`/accounts/publicKey/${pk}`)}>{pk}</td>,
+            <td key={1}>{row.balance}</td>
         ]
     }
 
+    if (error) return <>An error occurred.</>
     if (!data) return <Skeleton/>
     return <Card>
         <CardContent>
             <DynamicTableComponent
+                noWrapCell={true}
                 header={["Public Key", "Balance"]}
                 data={data}
                 renderRow={renderRow}

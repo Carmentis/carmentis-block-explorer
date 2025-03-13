@@ -1,44 +1,46 @@
 'use client';
 
-import React from 'react';
-import {Container, Typography, Link, CircularProgress, Box} from '@mui/material';
+import {
+    Box,
+    Button,
+    CircularProgress,
+    Container,
+    Paper,
+    Table,
+    TableBody,
+    TableCell,
+    TableContainer,
+    TableRow,
+    Typography
+} from '@mui/material';
 import useSWR from 'swr';
-import {useParams} from "next/navigation";
+import {useParams, useRouter} from "next/navigation";
 import * as sdk from '@cmts-dev/carmentis-sdk/client';
+import {AccountState, OrganisationDescription} from '@cmts-dev/carmentis-sdk/client';
 import {useAtomValue} from "jotai/index";
 import {networkAtom} from "@/atoms/network.atom";
+import React from 'react';
+import AvatarPlaceholder from 'boring-avatars';
+
+type OrganisationDetailProps = {
+    data: OrganisationData;
+};
 
 // Fetcher function to be implemented by you
 const fetcher = async (organisationHash: string) => {
    const vb = new sdk.blockchain.organizationVb(organisationHash);
    await vb.load();
-   const description = await vb.getDescription();
-   const account = await sdk.blockchain.blockchainQuery.getAccountState(organisationHash);
+   const description = await vb.getDescriptionObject();
+   const account = await sdk.blockchain.blockchainQuery.getAccountStateObject(organisationHash);
    return {
-       description: {
-           name: description.name,
-           location: `${description.city} (${description.countryCode})`,
-           website: description.website
-       },
-       account: {
-           publicKey: vb.getPublicKey(),
-           balance: account.balance
-       },
-       vb
+       description,
+       account
    }
 };
 
 type OrganisationData = {
-    vb: sdk.blockchain.organizationVb,
-    description: {
-        name: string,
-        location: string,
-        website: string
-    },
-    account: {
-        publicKey: string,
-        balance: number
-    },
+    description: OrganisationDescription,
+    account: AccountState,
 }
 
 export default function OrganisationPage() {
@@ -59,7 +61,7 @@ export default function OrganisationPage() {
         );
     }
 
-    if (error) {
+    if (!data || error) {
         return (
             <Container>
                 <Typography variant="h6" color="error">
@@ -69,27 +71,60 @@ export default function OrganisationPage() {
         );
     }
 
+    return <OrganisationDetail
+        data={data}
+    />;
+}
+
+
+
+
+const OrganisationDetail: React.FC<OrganisationDetailProps> = ({data}: {data: OrganisationData}) => {
+    const router = useRouter();
     return (
-        <Container>
-            <Typography variant="h4" gutterBottom>
-                Organisation Details
-            </Typography>
-            {data ? (
-                <>
-                    <Typography variant="h6">Name: {data.description.name}</Typography>
-                    <Typography variant="h6">Location: {data.description.location}</Typography>
-                    <Typography variant="h6">Public key: {data.account.publicKey}</Typography>
-                    <Typography variant="h6">balance: {data.account.balance}</Typography>
-                    <Typography variant="h6">
-                        Website:{' '}
-                        <Link href={data.description.website} target="_blank" rel="noopener noreferrer">
-                            {data.description.website}
-                        </Link>
-                    </Typography>
-                </>
-            ) : (
-                <Typography variant="body1">No organisation data available.</Typography>
-            )}
+        <Container component={Paper} sx={{p: 4}}>
+            <Box display="flex" flexDirection="column" alignItems="center" mb={4}>
+                <AvatarPlaceholder
+                    size={100}
+                    name={data.description.getPublicKey()}
+                    variant="marble"
+                />
+                <Typography variant="h5" mt={2}>
+                    {data.description.getName()}
+                </Typography>
+            </Box>
+            <TableContainer>
+                <Table>
+                    <TableBody>
+                        <TableRow>
+                            <TableCell><Typography variant="subtitle1">Location</Typography></TableCell>
+                            <TableCell>{data.description.getFormattedLocation()}</TableCell>
+                            <TableCell></TableCell>
+                        </TableRow>
+                        <TableRow>
+                            <TableCell><Typography variant="subtitle1">Public Key</Typography></TableCell>
+                            <TableCell>{data.description.getPublicKey()}</TableCell>
+                            <TableCell>
+                                <Button onClick={() => router.push(`/accounts/publicKey/${data.description.getPublicKey()}`)}>See account</Button>
+                            </TableCell>
+                        </TableRow>
+                        <TableRow>
+                            <TableCell><Typography variant="subtitle1">Balance</Typography></TableCell>
+                            <TableCell>{data.account.getBalance()}</TableCell>
+                            <TableCell></TableCell>
+                        </TableRow>
+                        <TableRow>
+                            <TableCell><Typography variant="subtitle1">Website</Typography></TableCell>
+                            <TableCell>
+                                <a href={data.description.getWebsite()} target="_blank" rel="noopener noreferrer">
+                                    {data.description.getWebsite()}
+                                </a>
+                            </TableCell>
+                            <TableCell></TableCell>
+                        </TableRow>
+                    </TableBody>
+                </Table>
+            </TableContainer>
         </Container>
     );
-}
+};

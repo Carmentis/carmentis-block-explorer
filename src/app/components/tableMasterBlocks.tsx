@@ -1,9 +1,9 @@
 'use client'
 
 import {useEffect, useRef, useState} from 'react';
-import { MasterBlock } from '@/app/interfaces/masterBlock';
+import {MasterBlock} from '@/app/interfaces/masterBlock';
 import * as Carmentis from '@/carmentis-nodejs-sdk';
-import { MasterBlockList } from '@/app/interfaces/masterBlockList';
+import {MasterBlockList} from '@/app/interfaces/masterBlockList';
 import {Formatters} from "@/app/utils/formatters";
 import Link from "next/link"
 import {GetChainStatusResponse} from "@/app/interfaces/getChainStatusResponse";

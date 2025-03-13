@@ -1,6 +1,6 @@
 'use client';
 import {ReactNode, useEffect, useState} from 'react';
-import {Typography} from "@mui/material";
+import {Tooltip, Typography} from "@mui/material";
 import Skeleton from "react-loading-skeleton";
 
 /**
@@ -160,16 +160,20 @@ export function DynamicTableComponent<T>(
  */
 function DynamicRow<T>( {numberOfCols, row, index, renderRow, noWrap}: {numberOfCols: number, row: T, index: number, renderRow: (row: T, index: number) => Promise<ReactNode[]>, noWrap: boolean }  ) {
     const [renderedRow, setRenderedRow] = useState<ReactNode[] | undefined>();
+    const [error, setError] = useState<Error|undefined>();
 
     useEffect(() => {
-        async function loadRow() {
-            const data = await renderRow(row, index);
-            setRenderedRow(data);
-        }
-
-        loadRow()
+        renderRow(row, index)
+            .then(data => setRenderedRow(data))
+            .catch(error => setError(error));
     }, [])
 
+
+    if (error) return <td colSpan={numberOfCols} className={"text-gray-500"}>
+        <Tooltip title={`An error occurred during the loading: ${error.message}`}>
+            <Typography>Loading failure</Typography>
+        </Tooltip>
+    </td>
     if (!renderedRow) return <td colSpan={numberOfCols}><Skeleton/></td>
     return renderedRow.map((r,i) => noWrap ? <>{r}</> : <td key={i}>{r}</td>);
 }

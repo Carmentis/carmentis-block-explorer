@@ -8,46 +8,55 @@ import {useAtomValue} from "jotai/index";
 import {networkAtom} from "@/atoms/network.atom";
 import useSWR from "swr";
 import {useEffect} from "react";
-import Link from "next/link";
 import {useRouter} from "next/navigation";
+import {BlockchainQuery, BlockchainQueryFabric} from "@cmts-dev/carmentis-sdk/client";
 
-const fetcher = async () =>  {
-    const applications : string[] = await sdk.blockchain.blockchainQuery.getApplications();
-
+const fetcher = async ([,client]: [string, BlockchainQuery]) =>  {
+    const applications : string[] = await client.getApplicationsHash();
     return applications;
 }
 
 export default function Applications() {
     const router = useRouter();
-    const network = useAtomValue(networkAtom);
-    sdk.blockchain.blockchainCore.setNode(network);
-    sdk.blockchain.blockchainQuery.setNode(network);
+    const network = useAtomValue(networkAtom)
+    const client = BlockchainQueryFabric.build(network);
 
     const {data, mutate} = useSWR(
-        ['getApplications'], fetcher
+        ['getApplications', client], fetcher
     );
 
+    function goToOrganisation(organisationId: string) {
+        router.push(`/organisations/${organisationId}`)
+    }
+
     const header = ["Name",  "Website", "Version", "Organisation"]
-    const renderRow = async (row : string, index: number) => {
+    const renderRow = async (row : string) => {
         const vb = new sdk.blockchain.applicationVb(row);
         await vb.load()
-        const lastVersion = vb.getHeight();
+        const latestVersion = vb.getLatestVersionNumber();
         const organisationVb = await vb.getOrganizationVb();
-        const desc = await vb.getDescription(lastVersion-1)
-        const orgDesc = await organisationVb.getDescription();
+        const desc = await vb.getDescriptionObject();
+        const orgDesc = await organisationVb.getDescriptionObject();
         return [
-            <Tooltip title={desc.description ?? 'No description provided.'}>
-                <p>{desc.name}</p>
-            </Tooltip>,
-            <>{desc.homepageUrl}</>,
-            <>{lastVersion}</>,
-            <Link href={`/organisations/${organisationVb.id}`}>{orgDesc.name}</Link>
+            <>
+                <Tooltip title={desc.getDescription() ?? 'No description provided.'}>
+                <p>{desc.getName()}</p>
+                </Tooltip>
+            </>,
+            <>{desc.getHomepageUrl()}</>,
+            <>{latestVersion}</>,
+            <>
+                <div onClick={(e) => {
+                    e.stopPropagation();
+                    goToOrganisation(organisationVb.id)
+                }}>{orgDesc.getName()}</div>
+            </>
         ]
     }
 
     useEffect(() => {
         mutate();
-    }, [network]);
+    });
 
     if (!data) return <Skeleton/>
     return <Card>
@@ -61,50 +70,4 @@ export default function Applications() {
         </CardContent>
     </Card>
 
-    /*
-    const accountExtractor = (data:string) => {
-        return [
-            { head: "Hash", value: <>{data}</> },
-        ]
-    }
-
-    const network = useAtomValue(networkAtom);
-    sdk.blockchain.blockchainQuery.setNode(network);
-
-    const {data,error,isLoading} = useSWR(
-        ['getApplications'], fetcher
-    );
-
-    console.log(data, error,isLoading)
-
-    if (!data) return <Skeleton/>
-    return <Card>
-        <CardContent>
-            <TableComponent
-                data={data}
-                extractor={accountExtractor}/>
-        </CardContent>
-    </Card>
-
-     */
-    /*
-    return (
-        <>
-            <PageTitle title={`Organisations Explorer`}/>
-            <section className="section dashboard">
-                <div className="row">
-                    <div className="col-lg-0">
-                        <div className="card">
-                            <div className="card-body"><h5 className="card-title">Organizations</h5>
-                                <table id="organizations" className="table"></table>
-                                <nav id="pagination"></nav>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            </section>
-        </>
-    );
-
-     */
 }
