@@ -1,6 +1,6 @@
 'use client'
 
-import {useState} from "react";
+import {useEffect, useState} from "react";
 import {useRouter} from 'next/navigation';
 import Image from "next/image";
 import {useAtom,} from 'jotai'
@@ -9,12 +9,26 @@ import {Button, TextField} from "@mui/material";
 import {NodeConnectionStatus} from "@/app/components/connection-status";
 import * as sdk from "@cmts-dev/carmentis-sdk/client";
 
+function useWindowWidth() {
+    const [width, setWidth] = useState(window.innerWidth);
+
+    useEffect(() => {
+        const handleResize = () => setWidth(window.innerWidth);
+
+        window.addEventListener('resize', handleResize);
+        return () => window.removeEventListener('resize', handleResize);
+    }, []);
+
+    return width;
+}
 
 export function Navbar() {
     const router = useRouter();
     const  [searchQuery, setSearchQuery] = useState('');
     const [network, setNetwork] = useAtom(networkAtom);
     const [networkField, setNetworkField] = useState(network);
+    const width = useWindowWidth()
+    
 
 
     function saveNetwork() {
@@ -63,11 +77,14 @@ export function Navbar() {
                     <button type="submit" title="Search"><i className="bi bi-search"></i></button>
                 </form>
             </div>
-            <nav className="header-nav ms-auto space-x-2">
-                <Button variant={"contained"} onClick={saveNetwork} hidden={network === networkField}>Update</Button>
-                <TextField value={networkField} size={"small"} label={"Node"} onChange={e => setNetworkField(e.target.value)}/>
-                <NodeConnectionStatus/>
-            </nav>
+            {
+                width > 700 && <nav className="header-nav ms-auto space-x-2">
+                    <Button variant={"contained"} onClick={saveNetwork} hidden={network === networkField}>Update</Button>
+                    <TextField value={networkField} size={"small"} label={"Node"}
+                               onChange={e => setNetworkField(e.target.value)}/>
+                    <NodeConnectionStatus/>
+                </nav>
+            }
         </div>
     );
 }
