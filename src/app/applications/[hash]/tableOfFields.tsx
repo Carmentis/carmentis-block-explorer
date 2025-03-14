@@ -1,6 +1,7 @@
-import {Field} from "../../../../../carmentis-core/dist/client";
+
 import {GenericTable} from "@/app/components/generic-table";
 import {Box, Chip, Typography} from "@mui/material";
+import {Field} from "@cmts-dev/carmentis-sdk/client";
 
 export function TableOfFields(input: { fields: Field[] }) {
     return <>
