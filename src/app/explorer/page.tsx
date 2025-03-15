@@ -2,7 +2,17 @@
 
 
 import {PageTitle} from '@/app/components/pagetitle';
-import {Table, TableBody, TableCell, TableHead, TableRow, TablePagination, Tooltip, Typography} from '@mui/material';
+import {
+    Table,
+    TableBody,
+    TableCell,
+    TableHead,
+    TableRow,
+    TablePagination,
+    Tooltip,
+    Typography,
+    TextField, Box, Button
+} from '@mui/material';
 import { useState } from 'react';
 import {BlockchainQuery, ChainStatus} from "@cmts-dev/carmentis-sdk/client";
 import useSWR from "swr";
@@ -11,6 +21,7 @@ import {ErrorDisplay} from "@/app/components/error-display";
 import useBlockchainQuery from "@/components/node.hook";
 import Skeleton from "react-loading-skeleton";
 import {useRouter} from "next/navigation";
+import {number} from "prop-types";
 
 const chainStatusFetcher = async ([, client]:[string, BlockchainQuery]) => {
     return await client.getChainStatus()
@@ -54,13 +65,11 @@ export default function BlockchainExplorer() {
 
 
 const PaginatedTable = ( {chainStatus}: {chainStatus: ChainStatus} ) => {
-    const [page, setPage] = useState(0);
-    const [rowsPerPage, setRowsPerPage] = useState(5);
-    const chainLength = chainStatus.getLastBlockHeight();
 
-    const rows = Array.from({ length: chainLength + 1 }, (_, i) => i)
-        .reverse()
-        .filter(i => i > 0);
+    const [desiredBlock, setDesiredBlock] = useState<number|undefined>();
+    const chainLength = chainStatus.getLastBlockHeight() + 1;
+    const [rowsPerPage, setRowsPerPage] = useState(5);
+    const [page, setPage] = useState(Math.max(0, Math.floor(chainLength / rowsPerPage) - 1));
 
     const handleChangePage = (_: unknown, newPage: number) => setPage(newPage);
     const handleChangeRowsPerPage = (event: React.ChangeEvent<HTMLInputElement>) => {
@@ -68,8 +77,29 @@ const PaginatedTable = ( {chainStatus}: {chainStatus: ChainStatus} ) => {
         setPage(0);
     };
     const header = ['Block', "Status", "Size", "Proposer", "Proposed At"]
+    const content = [];
+    for (let i = page * rowsPerPage;  i < (page + 1) * rowsPerPage ; i++) {
+        if (1 <= i && i < chainLength) {
+            const masterBlockHeight = i;
+            const row = <LoadMasterBlockRow masterBlockHeight={masterBlockHeight} key={masterBlockHeight} colSpan={header.length}/>
+            content.push(row);
+        }
+    }
+
+    function goToBlock(n: number) {
+        const targetBlock = Math.max(1, Math.min(n,chainLength));
+        const targetPage = Math.floor(targetBlock / rowsPerPage);
+        console.log(targetBlock, rowsPerPage, targetPage)
+        setPage(targetPage);
+        setDesiredBlock(undefined);
+    }
+
     return (
         <>
+            <Box>
+                <TextField type={"number"} value={desiredBlock} onChange={e => setDesiredBlock(Number(e.target.value))} size={"small"} />
+                <Button onClick={() => goToBlock(desiredBlock)}>Go to block</Button>
+            </Box>
             <Table>
                 <TableHead>
                     <TableRow>
@@ -79,15 +109,13 @@ const PaginatedTable = ( {chainStatus}: {chainStatus: ChainStatus} ) => {
                     </TableRow>
                 </TableHead>
                 <TableBody>
-                    {rows.slice(page * rowsPerPage, (page + 1) * rowsPerPage).map((masterBlockHeight, index) => (
-                        <LoadMasterBlockRow masterBlockHeight={masterBlockHeight} key={masterBlockHeight} colSpan={header.length}/>
-                    ))}
+                    {content}
                 </TableBody>
             </Table>
             <TablePagination
                 rowsPerPageOptions={[5, 10, 25]}
                 component="div"
-                count={rows.length}
+                count={chainLength}
                 rowsPerPage={rowsPerPage}
                 page={page}
                 onPageChange={handleChangePage}
