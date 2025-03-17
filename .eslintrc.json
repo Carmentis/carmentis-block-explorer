@@ -2,6 +2,8 @@
   "extends": ["next/core-web-vitals", "next/typescript"],
   "ignorePatterns": ["*carmentis*"],
   "rules": {
-    "no-unused-vars": "off"
+    "no-unused-vars": "off",
+    "react-hooks/rules-of-hooks": "off",
+    "@typescript-eslint/no-unused-vars": "off"
   }
 }

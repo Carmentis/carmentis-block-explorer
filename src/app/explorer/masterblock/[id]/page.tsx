@@ -3,7 +3,6 @@
 
 import {PageTitle} from "@/app/components/pagetitle";
 import {useParams, useRouter} from "next/navigation";
-import * as sdk from "@cmts-dev/carmentis-sdk/client";
 import useSWR from "swr";
 import Skeleton from "react-loading-skeleton";
 import {DynamicTableComponent} from "@/components/table.component";
@@ -25,17 +24,7 @@ export default function MasterBlockExplorer() {
 }
 
 async function loadBlock( [,client, h]: [string, BlockchainQuery, number] ) {
-    const block = await client.getMasterBlock(h)
-    return block;
-    /*
-    const status = await sdk.blockchain.blockchainQuery.getBlockInfo(h);
-    const content = await sdk.blockchain.blockchainQuery.getBlockContent(h);
-    return {
-        status,
-        content
-    };
-
-     */
+    return await client.getMasterBlock(h);
 }
 
 

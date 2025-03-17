@@ -1,6 +1,6 @@
 'use client'
 
-import {useEffect, useState} from "react";
+import {useState} from "react";
 import {useRouter} from 'next/navigation';
 import Image from "next/image";
 import {useAtom,} from 'jotai'
@@ -8,17 +8,10 @@ import {networkAtom} from "@/atoms/network.atom";
 import {Button, TextField} from "@mui/material";
 import {NodeConnectionStatus} from "@/app/components/connection-status";
 import * as sdk from "@cmts-dev/carmentis-sdk/client";
+import {useWindowSize} from "react-use";
 
 function useWindowWidth() {
-    const [width, setWidth] = useState(window.innerWidth);
-
-    useEffect(() => {
-        const handleResize = () => setWidth(window.innerWidth);
-
-        window.addEventListener('resize', handleResize);
-        return () => window.removeEventListener('resize', handleResize);
-    }, []);
-
+    const {width} = useWindowSize();
     return width;
 }
 

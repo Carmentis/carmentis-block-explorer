@@ -39,7 +39,7 @@ export default function OrganisationsPage() {
     );
 
     const header = ["Name", "Location", "Website", "Public Key", "Balance"]
-    const renderRow = async (row : {hash: string, account: AccountState}, index: number) => {
+    const renderRow = async (row : {hash: string, account: AccountState}) => {
         // load the organisation
         const vb = new sdk.blockchain.organizationVb(row.hash);
         await vb.load()

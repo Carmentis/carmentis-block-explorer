@@ -21,7 +21,6 @@ import {ErrorDisplay} from "@/app/components/error-display";
 import useBlockchainQuery from "@/components/node.hook";
 import Skeleton from "react-loading-skeleton";
 import {useRouter} from "next/navigation";
-import {number} from "prop-types";
 
 const chainStatusFetcher = async ([, client]:[string, BlockchainQuery]) => {
     return await client.getChainStatus()
@@ -89,7 +88,6 @@ const PaginatedTable = ( {chainStatus}: {chainStatus: ChainStatus} ) => {
     function goToBlock(n: number) {
         const targetBlock = Math.max(1, Math.min(n,chainLength));
         const targetPage = Math.floor(targetBlock / rowsPerPage);
-        console.log(targetBlock, rowsPerPage, targetPage)
         setPage(targetPage);
         setDesiredBlock(undefined);
     }
@@ -98,7 +96,7 @@ const PaginatedTable = ( {chainStatus}: {chainStatus: ChainStatus} ) => {
         <>
             <Box>
                 <TextField type={"number"} value={desiredBlock} onChange={e => setDesiredBlock(Number(e.target.value))} size={"small"} />
-                <Button onClick={() => goToBlock(desiredBlock)}>Go to block</Button>
+                <Button onClick={() => desiredBlock && goToBlock(desiredBlock)}>Go to block</Button>
             </Box>
             <Table>
                 <TableHead>
