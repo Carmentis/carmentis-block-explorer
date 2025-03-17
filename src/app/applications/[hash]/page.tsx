@@ -68,6 +68,7 @@ export default function Application() {
     if (!data || isLoading) return <Skeleton/>
     return <>
         <ApplicationDescriptionComponent
+            id={hash}
             description={data.desc}
             orgDesc={data.orgDesc}
         />
@@ -80,10 +81,12 @@ export default function Application() {
 }
 
 
-function ApplicationDescriptionComponent( input: { description: ApplicationDescription, orgDesc: OrganisationDescription } ) {
+function ApplicationDescriptionComponent( input: { id: string, description: ApplicationDescription, orgDesc: OrganisationDescription } ) {
     const description = input.description;
+    console.log("application description:", description)
     const items = [
         { label: "Name", value: description.getName() },
+        { label: "Id", value: input.id },
         { label: "Description", value: description.getDescription() },
         { label: "Website", value: description.getHomepageUrl() },
         { label: "Logo URL", value: description.getLogoUrl() },
