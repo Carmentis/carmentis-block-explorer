@@ -8,6 +8,7 @@ COPY . .
 
 # Install dependencies
 RUN npm install
+RUN npm build
 
 
 # Expose the port Next.js will run on

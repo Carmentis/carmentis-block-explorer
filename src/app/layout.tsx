@@ -15,6 +15,7 @@ import * as sdk from '@cmts-dev/carmentis-sdk/client';
 import {JotaiProvider} from "@/components/jotai.component";
 import {SWRConfig} from "swr";
 import axios from "axios";
+import {PublicEnvScript} from "next-runtime-env";
 
 const SWR_CONFIG = {
     refreshInterval: 1000,
@@ -31,6 +32,7 @@ export default function RootLayout(
     return (
         <SWRConfig value={SWR_CONFIG}>
         <JotaiProvider>
+            <PublicEnvScript/>
                 <html lang="en">
                 <body>
                 <Navbar></Navbar>

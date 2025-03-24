@@ -19,6 +19,7 @@ import {
     TableRow,
     Typography
 } from "@mui/material";
+import Link from "next/link";
 
 
 const fetcher = async ( input: string[] ) =>  {
@@ -26,7 +27,6 @@ const fetcher = async ( input: string[] ) =>  {
     console.assert(typeof input[1] === "string" );
     const hash = input[1];
     const c = await sdk.blockchain.blockchainQuery.getMicroblockContentObject(hash)
-    console.log(c)
     return c
 }
 
@@ -50,6 +50,13 @@ export default function MicroBlockExplorer() {
 }
 
 const DataDisplay = ({ data }: {data: MicroBlock}) => {
+    // compute the previous hash link
+    const height = data.getHeight();
+    const previousHash = data.getPreviousHash();
+    const previousHashLink = height !== 1 ?  <Link href={`/explorer/microblock/${previousHash}`}>
+        {previousHash}
+    </Link> :  <>{previousHash}</>
+
     return (
         <Card sx={{  margin: "auto", mt: 4, boxShadow: 3 }}>
             <CardContent>
@@ -69,7 +76,9 @@ const DataDisplay = ({ data }: {data: MicroBlock}) => {
                             </TableRow>
                             <TableRow>
                                 <TableCell sx={{fontWeight: 'bold', paddingRight: 4}}>Previous Hash:</TableCell>
-                                <TableCell>{data.getPreviousHash()}</TableCell>
+                                <TableCell>
+                                    {previousHashLink}
+                                </TableCell>
                             </TableRow>
                             <TableRow>
                                 <TableCell sx={{fontWeight: 'bold', paddingRight: 4}}>Timestamp:</TableCell>
