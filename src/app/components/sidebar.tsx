@@ -34,13 +34,14 @@ export function Sidebar() {
                     <ActiveLink href="/oracles" className="side-menu nav-link" name="Oracles" icon="bi-grid"/>
                 </li>
 
-                <li className="nav-heading">Other tools</li>
+                <li className="nav-heading">Tools</li>
+                <li className="nav-item">
+                    <ActiveLink href="/proofChecker" className="side-menu nav-link" name="Proof checker" icon="bi-check"/>
+                </li>
                 <li className="nav-item"><a className="nav-link collapsed" href="https://workspace.carmentis.io"><i
                     className="bi bi-box-arrow-up-right"></i> <span>Workspace</span></a></li>
                 <li className="nav-item"><a className="nav-link collapsed" href="https://exchange.carmentis.io"><i
                     className="bi bi-box-arrow-up-right"></i> <span>Exchange</span></a></li>
-                <li className="nav-item"><a className="nav-link collapsed" href="https://proof.carmentis.io"><i
-                    className="bi bi-box-arrow-up-right"></i> <span>Proof Upload</span></a></li>
             </ul>
         </aside>
     );
