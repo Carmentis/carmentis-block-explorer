@@ -128,7 +128,7 @@ function ProofCheckerUpload( {onUpload }: { onUpload: (proof: any) => void }) {
 function ProofViewer({proof, resetProof}: {resetProof: () => void, proof: Record<string, any>}) {
     const state = useAsync(async () => {
         console.log(proof, typeof proof);
-        let loader = new proofLoader(JSON.stringify(proof));
+        let loader = new proofLoader(proof);
         try {
             const records = await loader.load();
             return { verified: true, records: records.records }
