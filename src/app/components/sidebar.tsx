@@ -1,10 +1,15 @@
 'use client'
 
 import ActiveLink from "@/app/components/myLink";
+import {usePathname} from "next/navigation";
 
 
 export function Sidebar() {
-
+    const pathname = usePathname();
+    const isAlpha = typeof pathname === "string" && pathname.includes("alpha");
+    const env = isAlpha ? "alpha" : "beta";
+    const workspaceUrl = `https://workspace.${env}.carmentis.io`;
+    const exchangeUrl = `https://exchange.${env}.carmentis.io`;
     return (
         <aside id="sidebar" className="sidebar">
             <ul className="sidebar-nav" id="sidebar-nav">
@@ -38,9 +43,9 @@ export function Sidebar() {
                 <li className="nav-item">
                     <ActiveLink href="/proofChecker" className="side-menu nav-link" name="Proof checker" icon="bi-check"/>
                 </li>
-                <li className="nav-item"><a className="nav-link collapsed" href="https://workspace.carmentis.io"><i
+                <li className="nav-item"><a target={"_blank"} className="nav-link collapsed" href={workspaceUrl}><i
                     className="bi bi-box-arrow-up-right"></i> <span>Workspace</span></a></li>
-                <li className="nav-item"><a className="nav-link collapsed" href="https://exchange.carmentis.io"><i
+                <li className="nav-item"><a target={"_blank"} className="nav-link collapsed" href={exchangeUrl}><i
                     className="bi bi-box-arrow-up-right"></i> <span>Exchange</span></a></li>
             </ul>
         </aside>
