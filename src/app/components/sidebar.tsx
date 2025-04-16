@@ -35,16 +35,10 @@ export function Sidebar() {
                 <li className="nav-item">
                     <ActiveLink href="/applications" className="side-menu nav-link" name="Applications" icon="bi-grid"/>
                 </li>
-                <li className="nav-item">
-                    <ActiveLink href="/oracles" className="side-menu nav-link" name="Oracles" icon="bi-grid"/>
-                </li>
-
                 <li className="nav-heading">Tools</li>
                 <li className="nav-item">
                     <ActiveLink href="/proofChecker" className="side-menu nav-link" name="Proof checker" icon="bi-check"/>
                 </li>
-                <li className="nav-item"><a target={"_blank"} className="nav-link collapsed" href={workspaceUrl}><i
-                    className="bi bi-box-arrow-up-right"></i> <span>Workspace</span></a></li>
                 <li className="nav-item"><a target={"_blank"} className="nav-link collapsed" href={exchangeUrl}><i
                     className="bi bi-box-arrow-up-right"></i> <span>Exchange</span></a></li>
             </ul>
