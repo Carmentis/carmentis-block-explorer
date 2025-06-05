@@ -4,9 +4,11 @@ import { useState, useEffect } from 'react';
 import * as sdk from "@cmts-dev/carmentis-sdk/client";
 import { useAtomValue } from 'jotai';
 import { networkAtom } from "@/atoms/network.atom";
+import {Tooltip} from "@mui/material";
 
 export function NodeConnectionStatus() {
     const [isConnected, setIsConnected] = useState<boolean | null>(null);
+    const [showTooltip, setShowTooltip] = useState(false);
     const network = useAtomValue(networkAtom);
 
     useEffect(() => {
@@ -36,9 +38,14 @@ export function NodeConnectionStatus() {
 
     return (
         <div className="flex items-center">
-            <div className="flex items-center">
+            <Tooltip title={network}>
+                <div className="flex items-center">
                 <span className="text-sm mr-2">Node Status:</span>
-                <div className="relative flex items-center">
+                <div 
+                    className="relative flex items-center"
+                    onMouseEnter={() => setShowTooltip(true)}
+                    onMouseLeave={() => setShowTooltip(false)}
+                >
                     <div className={`w-3 h-3 rounded-full ${
                         isConnected === null 
                             ? 'bg-gray-400' // Loading state
@@ -53,8 +60,11 @@ export function NodeConnectionStatus() {
                                 ? 'Connected' 
                                 : 'Disconnected'}
                     </span>
+
+
                 </div>
             </div>
+            </Tooltip>
         </div>
     );
 }
