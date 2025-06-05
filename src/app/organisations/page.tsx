@@ -10,6 +10,7 @@ import {networkAtom} from "@/atoms/network.atom";
 import useSWR from "swr";
 import {useEffect} from "react";
 import {useRouter} from "next/navigation";
+import { PageTitle } from "@/app/components/pagetitle";
 
 
 const fetcher = async () =>  {
@@ -58,14 +59,15 @@ export default function OrganisationsPage() {
     }, [network]);
 
     if (!data) return <Skeleton/>
-    return <Card>
-        <CardContent>
+    return (
+        <>
+            <PageTitle title="Organisations" />
             <DynamicTableComponent
                 header={header}
                 data={data}
                 renderRow={renderRow}
                 onRowClicked={(row) => router.push(`/organisations/${row.hash}`)}
             />
-        </CardContent>
-    </Card>
+        </>
+    )
 }

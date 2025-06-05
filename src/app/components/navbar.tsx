@@ -3,9 +3,8 @@
 import {useState} from "react";
 import {useRouter} from 'next/navigation';
 import Image from "next/image";
-import {useAtom,} from 'jotai'
+import {useAtom} from 'jotai'
 import {networkAtom} from "@/atoms/network.atom";
-import {Button, TextField} from "@mui/material";
 import {NodeConnectionStatus} from "@/app/components/connection-status";
 import * as sdk from "@cmts-dev/carmentis-sdk/client";
 import {useWindowSize} from "react-use";
@@ -17,21 +16,19 @@ function useWindowWidth() {
 
 export function Navbar() {
     const router = useRouter();
-    const  [searchQuery, setSearchQuery] = useState('');
+    const [searchQuery, setSearchQuery] = useState('');
     const [network, setNetwork] = useAtom(networkAtom);
     const [networkField, setNetworkField] = useState(network);
-    const width = useWindowWidth()
-    
-
+    const width = useWindowWidth();
 
     function saveNetwork() {
-        setNetwork(networkField)
-        sdk.blockchain.blockchainCore.setNode(networkField)
+        setNetwork(networkField);
+        sdk.blockchain.blockchainCore.setNode(networkField);
     }
 
     function OnSubmit(event: React.FormEvent<HTMLFormElement>) {
         // stop the propagation of the form event
-        event.preventDefault()
+        event.preventDefault();
 
         // navigate to search
         router.push("/search?query=" + searchQuery);
@@ -43,42 +40,73 @@ export function Navbar() {
     const toggleNavbarClass = "toggle-sidebar";
     function toggleNavbar() {
         // get the body element (halt if document or body are not defined)
-        if ( typeof window.document !== undefined ) {
+        if (typeof window.document !== undefined) {
             const body = document.querySelector('body');
-            if ( body === null ) return;
+            if (body === null) return;
 
             // add or remove the toggle class to hide or show the sidebar
-            if ( body.classList.contains(toggleNavbarClass) ) {
+            if (body.classList.contains(toggleNavbarClass)) {
                 body.classList.remove(toggleNavbarClass);
             } else {
                 body.classList.add(toggleNavbarClass);
             }
-        }
 
+            // Dispatch a custom event that our layout component can listen for
+            const event = new CustomEvent('sidebarToggle', { 
+                detail: { isOpen: body.classList.contains(toggleNavbarClass) } 
+            });
+            window.dispatchEvent(event);
+        }
     }
 
     return (
-        <div id="navbar" className="header fixed-top d-flex align-items-center">
-            <div className="d-flex align-items-center justify-content-between">
+        <header className="fixed top-0 left-0 right-0 h-[60px] bg-white shadow-md z-50 flex items-center px-4">
+            {/* Hamburger Menu (Left) */}
+            <button 
+                onClick={toggleNavbar} 
+                className="text-gray-700 hover:text-gray-900 focus:outline-none mr-3"
+            >
+                <i className="bi bi-list text-2xl"></i>
+            </button>
+
+            {/* Logo (Right to Hamburger) */}
+            <div className="flex items-center mr-4">
                 <Image
-                    src="/logo-full.svg" width="150" height={200} alt="" /> <span className="d-none d-lg-block"><span
-                className="toolname">Explorer</span></span><i onClick={toggleNavbar} className="bi bi-list toggle-sidebar-btn"></i>
+                    src="/logo-full.svg" 
+                    width={150}
+                    height={30}
+                    alt="Carmentis Logo" 
+                    className="h-5 w-auto"
+                />
+
             </div>
-            <div className="search-bar">
-                <form className="search-form d-flex align-items-center" onSubmit={OnSubmit}>
-                    <input type="text" name="query" placeholder="Search" title="Enter search keyword" onChange={(e) => setSearchQuery(e.target.value)} />
-                    <button type="submit" title="Search"><i className="bi bi-search"></i></button>
+
+            {/* Search Bar (Middle) */}
+            <div className="mx-auto flex-grow max-w-md">
+                <form onSubmit={OnSubmit} className="relative">
+                    <input 
+                        type="text" 
+                        name="query" 
+                        placeholder="Search" 
+                        className="w-full py-1.5 px-4 pr-10 rounded-full border border-gray-300 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent text-sm"
+                        onChange={(e) => setSearchQuery(e.target.value)} 
+                    />
+                    <button 
+                        type="submit" 
+                        title="Search" 
+                        className="absolute right-0 top-0 h-full px-3 text-gray-500 hover:text-gray-700"
+                    >
+                        <i className="bi bi-search"></i>
+                    </button>
                 </form>
             </div>
-            {
-                width > 700 && <nav className="header-nav ms-auto space-x-2">
-                    <Button variant={"contained"} onClick={saveNetwork} hidden={network === networkField}>Update</Button>
-                    <TextField value={networkField} size={"small"} label={"Node"}
-                               onChange={e => setNetworkField(e.target.value)}/>
-                    <NodeConnectionStatus/>
-                </nav>
-            }
-        </div>
+
+            {/* Connection Status (Right) */}
+            {width > 700 && (
+                <div className="ml-auto">
+                    <NodeConnectionStatus />
+                </div>
+            )}
+        </header>
     );
 }
-

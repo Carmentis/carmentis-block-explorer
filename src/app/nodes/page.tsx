@@ -7,6 +7,7 @@ import TableComponent from "@/components/table.component";
 import {useAtomValue} from "jotai/index";
 import {networkAtom} from "@/atoms/network.atom";
 import useSWR from "swr";
+import { PageTitle } from "@/app/components/pagetitle";
 
 const fetcher = async () =>  {
     const nodes : string[] = await sdk.blockchain.blockchainQuery.getValidatorNodes();
@@ -31,13 +32,14 @@ export default function ValidatorNodes() {
     console.log(data, error,isLoading)
 
     if (!data) return <Skeleton/>
-    return <Card>
-        <CardContent>
+    return (
+        <>
+            <PageTitle title="Validator Nodes" />
             <TableComponent
                 data={data}
                 extractor={accountExtractor}/>
-        </CardContent>
-    </Card>
+        </>
+    )
     /*
     return (
         <>

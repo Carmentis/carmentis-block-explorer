@@ -24,7 +24,6 @@ export default function TableMicroBlocks(props: TableMicroBlocksProps) {
 
     return <DynamicTableComponent
         header={["Micro-Block Hash", "Sections", "Timestamp"]}
-        noWrapCell={true}
         data={props.hashes}
         renderRow={renderMicroBlock}
         onRowClicked={(data) => {router.push(`/explorer/microblock/${data}`)}}

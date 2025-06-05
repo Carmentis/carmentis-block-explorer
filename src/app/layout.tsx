@@ -1,21 +1,22 @@
 "use client";
 
-import 'bootstrap/dist/css/bootstrap.min.css';
+// Keep necessary styles
 import 'react-loading-skeleton/dist/skeleton.css'
-import {Navbar} from '@/app/components/navbar';
-import {Sidebar} from '@/app/components/sidebar';
 import 'bootstrap-icons/font/bootstrap-icons.css'
 import 'swiper/css';
 import 'swiper/css/navigation';
 import 'swiper/css/pagination';
 import './globals.css';
-import './custom.css';
-import Script from "next/script";
+
+// Components
+import {Navbar} from '@/app/components/navbar';
+import {Sidebar} from '@/app/components/sidebar';
 import * as sdk from '@cmts-dev/carmentis-sdk/client';
 import {JotaiProvider} from "@/components/jotai.component";
 import {SWRConfig} from "swr";
 import axios from "axios";
 import {PublicEnvScript} from "next-runtime-env";
+import { useState, useEffect } from 'react';
 
 const SWR_CONFIG = {
     refreshInterval: 1000,
@@ -23,45 +24,94 @@ const SWR_CONFIG = {
     fetcher: (url: string) => axios.get(url).then(res => res.data)
 }
 
-
-
 export default function RootLayout(
     {children}: Readonly<{ children: React.ReactNode; }>
 ) {
-    sdk.blockchain.blockchainQuery.setNode(process.env.NEXT_PUBLIC_NODE_URL)
+    sdk.blockchain.blockchainQuery.setNode(process.env.NEXT_PUBLIC_NODE_URL);
+
+    // State to track if sidebar is open (for mobile)
+    const [sidebarOpen, setSidebarOpen] = useState(false);
+
+    // Effect to handle sidebar toggle class for existing toggle functionality
+    useEffect(() => {
+        const handleBodyClassChange = () => {
+            const body = document.querySelector('body');
+            if (body) {
+                if (sidebarOpen) {
+                    body.classList.add('toggle-sidebar');
+                } else {
+                    body.classList.remove('toggle-sidebar');
+                }
+            }
+        };
+
+        handleBodyClassChange();
+
+        // Listen for toggle-sidebar class changes from other components
+        const observer = new MutationObserver((mutations) => {
+            mutations.forEach((mutation) => {
+                if (mutation.attributeName === 'class') {
+                    const body = document.querySelector('body');
+                    if (body) {
+                        setSidebarOpen(body.classList.contains('toggle-sidebar'));
+                    }
+                }
+            });
+        });
+
+        // Listen for custom sidebarToggle event from navbar
+        const handleSidebarToggle = (event: any) => {
+            setSidebarOpen(event.detail.isOpen);
+        };
+
+        window.addEventListener('sidebarToggle', handleSidebarToggle);
+
+        const body = document.querySelector('body');
+        if (body) {
+            observer.observe(body, { attributes: true });
+        }
+
+        return () => {
+            observer.disconnect();
+            window.removeEventListener('sidebarToggle', handleSidebarToggle);
+        };
+    }, [sidebarOpen]);
+
     return (
         <SWRConfig value={SWR_CONFIG}>
-        <JotaiProvider>
-            <PublicEnvScript/>
-                <html lang="en">
-                <body>
-                <Navbar></Navbar>
-                <div id="dashboard">
-                    <div id="dashboard-sidebar">
-                        <Sidebar></Sidebar>
-                    </div>
-                    <div id="dashboard-body">
-                        <main id="main" className="main with-menu d-block">
-
-                            <section className="section dashboard">
-
-                                {children}
-                            </section>
-                        </main>
-                        <footer id="footer" className="footer d-block">
-                            <div className="copyright">© Copyright <strong><span>Carmentis SAS</span></strong>. All
-                                Rights
-                                Reserved
+            <JotaiProvider>
+                <PublicEnvScript/>
+                <html lang="en" className="h-full">
+                    <body className="bg-gray-50 min-h-screen">
+                        <Navbar />
+                        <div className="flex min-h-screen pt-[60px]">
+                            {/* Sidebar - hidden on mobile by default, shown when sidebarOpen is true */}
+                            <div className={`${sidebarOpen ? 'block' : 'hidden'} lg:block`}>
+                                <Sidebar />
                             </div>
-                        </footer>
-                    </div>
 
-                </div>
+                            {/* Main Content - full width on mobile, adjusted on desktop */}
+                            <div className={`flex-1 transition-all duration-300 w-full 
+                                ${sidebarOpen ? 'lg:ml-64' : 'lg:ml-0'} 
+                                lg:ml-64`}
+                            >
+                                <main className="p-4 md:p-6">
+                                    <div className="mb-6">
+                                        {children}
+                                    </div>
+                                </main>
 
-                <Script src={"bootstrap/dist/js/bootstrap.min.js"}/>
-                </body>
+                                {/* Footer */}
+                                <footer className="px-4 md:px-6 py-4 border-t border-gray-200">
+                                    <div className="text-center text-sm text-gray-600">
+                                        © Copyright <span className="font-semibold">Carmentis SAS</span>. All Rights Reserved
+                                    </div>
+                                </footer>
+                            </div>
+                        </div>
+                    </body>
                 </html>
-        </JotaiProvider>
+            </JotaiProvider>
         </SWRConfig>
     );
 }

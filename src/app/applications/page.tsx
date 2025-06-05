@@ -10,6 +10,7 @@ import useSWR from "swr";
 import {useEffect} from "react";
 import {useRouter} from "next/navigation";
 import {BlockchainQuery, BlockchainQueryFabric} from "@cmts-dev/carmentis-sdk/client";
+import { PageTitle } from "@/app/components/pagetitle";
 
 const fetcher = async ([,client]: [string, BlockchainQuery]) =>  {
     const applications : string[] = await client.getApplicationsHash();
@@ -59,15 +60,16 @@ export default function Applications() {
     });
 
     if (!data) return <Skeleton/>
-    return <Card>
-        <CardContent>
+    return (
+        <>
+            <PageTitle title="Applications" />
             <DynamicTableComponent
                 header={header}
                 data={data}
                 renderRow={renderRow}
                 onRowClicked={(hash) => router.push(`/applications/${hash}`)}
             />
-        </CardContent>
-    </Card>
+        </>
+    )
 
 }

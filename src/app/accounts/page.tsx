@@ -8,6 +8,7 @@ import {Card, CardContent} from "@mui/material";
 import {DynamicTableComponent} from "@/components/table.component";
 import Skeleton from "react-loading-skeleton";
 import {useRouter} from "next/navigation";
+import { PageTitle } from "@/app/components/pagetitle";
 
 
 const fetcher = async () =>  {
@@ -50,15 +51,15 @@ export default function Accounts() {
 
     if (error) return <>An error occurred.</>
     if (!data) return <Skeleton/>
-    return <Card>
-        <CardContent>
+    return (
+        <>
+            <PageTitle title="Accounts" />
             <DynamicTableComponent
-                noWrapCell={true}
                 header={["Public Key", "Balance"]}
                 data={data}
                 renderRow={renderRow}
                 onRowClicked={console.log}
             />
-        </CardContent>
-    </Card>
+        </>
+    )
 }

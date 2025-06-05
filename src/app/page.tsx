@@ -62,7 +62,6 @@ function LatestBlocks() {
         <DynamicTableComponent
             key={lastBlockHeight}
             header={["Block", "Status", "Size", "#Sections", "Proposer", "Proposed at"]}
-            noWrapCell={true}
             data={masterBlockIds}
             renderRow={renderRow}
             onRowClicked={(h) => {router.push(`/explorer/masterblock/${h}`)}}
@@ -71,10 +70,6 @@ function LatestBlocks() {
 }
 
 function LatestBlocksDisplay({children}: PropsWithChildren) {
-    return <Card>
-        <CardContent>
-            {children}
-        </CardContent>
-    </Card>
+    return <>{children}</>
 }
 
