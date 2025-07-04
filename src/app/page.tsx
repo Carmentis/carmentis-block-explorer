@@ -4,18 +4,25 @@ import {PropsWithChildren} from 'react';
 import {PageTitle} from '@/app/components/pagetitle';
 import useSWR from "swr";
 import Skeleton from "react-loading-skeleton";
-import * as sdk from '@cmts-dev/carmentis-sdk/client';
+import {} from '@cmts-dev/carmentis-sdk/client';
 import {useAtomValue} from "jotai";
 import {networkAtom} from "@/atoms/network.atom";
 import {DynamicTableComponent} from "@/components/table.component";
 import {useRouter} from "next/navigation";
-import {Card, CardContent} from "@mui/material";
+import { useExplorer } from './layout';
 
 
 async function loadCurrentHeight() {
+    const explorer = useExplorer();
+    // TODO Missing load current chain implementation
+    return 0;
+    /*
+    return explorer.getVirtualBlockchainHashes()
     const status = await sdk.blockchain.blockchainQuery.getChainStatus()
     console.log(status)
     return status
+
+     */
 }
 
 

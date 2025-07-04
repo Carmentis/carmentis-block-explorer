@@ -15,42 +15,29 @@ import {
 } from '@mui/material';
 import useSWR from 'swr';
 import {useParams, useRouter} from "next/navigation";
-import * as sdk from '@cmts-dev/carmentis-sdk/client';
-import {AccountState, OrganisationDescription} from '@cmts-dev/carmentis-sdk/client';
-import {useAtomValue} from "jotai/index";
-import {networkAtom} from "@/atoms/network.atom";
+import {Hash, OrganizationDescription} from '@cmts-dev/carmentis-sdk/client';
 import React from 'react';
 import AvatarPlaceholder from 'boring-avatars';
+import {useBlockchain, useExplorer} from "@/app/layout";
 
 type OrganisationDetailProps = {
-    data: OrganisationData;
+    data: OrganizationDescription;
 };
 
 // Fetcher function to be implemented by you
-const fetcher = async (organisationHash: string) => {
-   const vb = new sdk.blockchain.organizationVb(organisationHash);
-   await vb.load();
-   const description = await vb.getDescriptionObject();
-   const account = await sdk.blockchain.blockchainQuery.getAccountStateObject(organisationHash);
-   return {
-       description,
-       account
-   }
+const fetcher = async (organisationHash: Hash) => {
+   const blockchain = useBlockchain();
+   const vb = await blockchain.loadOrganization(organisationHash);
+   return await vb.getDescription();
 };
 
-type OrganisationData = {
-    description: OrganisationDescription,
-    account: AccountState,
-}
+
 
 export default function OrganisationPage() {
-    const network = useAtomValue(networkAtom);
-    sdk.blockchain.blockchainCore.setNode(network);
-    sdk.blockchain.blockchainQuery.setNode(network);
     const params = useParams<{hash: string}>();
-    const {data, error, isLoading} = useSWR<OrganisationData>(
+    const {data, error, isLoading} = useSWR<OrganizationDescription>(
         ["getSingleOrganisation", params.hash],
-        async ([, hash]: [string,string]) => fetcher(hash));
+        async ([, hash]: [string,string]) => fetcher(Hash.from(hash)));
 
 
     if (isLoading) {
@@ -79,18 +66,18 @@ export default function OrganisationPage() {
 
 
 
-const OrganisationDetail: React.FC<OrganisationDetailProps> = ({data}: {data: OrganisationData}) => {
+const OrganisationDetail: React.FC<OrganisationDetailProps> = ({data}: {data: OrganizationDescription}) => {
     const router = useRouter();
     return (
         <Container component={Paper} sx={{p: 4}}>
             <Box display="flex" flexDirection="column" alignItems="center" mb={4}>
                 <AvatarPlaceholder
                     size={100}
-                    name={data.description.getPublicKey()}
+                    name={data.name}
                     variant="marble"
                 />
                 <Typography variant="h5" mt={2}>
-                    {data.description.getName()}
+                    {data.name}
                 </Typography>
             </Box>
             <TableContainer>
@@ -98,26 +85,21 @@ const OrganisationDetail: React.FC<OrganisationDetailProps> = ({data}: {data: Or
                     <TableBody>
                         <TableRow>
                             <TableCell><Typography variant="subtitle1">Location</Typography></TableCell>
-                            <TableCell>{data.description.getFormattedLocation()}</TableCell>
+                            <TableCell>{`${data.city} (${data.countryCode})`}</TableCell>
                             <TableCell></TableCell>
                         </TableRow>
                         <TableRow>
                             <TableCell><Typography variant="subtitle1">Public Key</Typography></TableCell>
-                            <TableCell>{data.description.getPublicKey()}</TableCell>
+                            <TableCell>--</TableCell>
                             <TableCell>
-                                <Button onClick={() => router.push(`/accounts/publicKey/${data.description.getPublicKey()}`)}>See account</Button>
                             </TableCell>
                         </TableRow>
-                        <TableRow>
-                            <TableCell><Typography variant="subtitle1">Balance</Typography></TableCell>
-                            <TableCell>{data.account.getBalance()}</TableCell>
-                            <TableCell></TableCell>
-                        </TableRow>
+
                         <TableRow>
                             <TableCell><Typography variant="subtitle1">Website</Typography></TableCell>
                             <TableCell>
-                                <a href={data.description.getWebsite()} target="_blank" rel="noopener noreferrer">
-                                    {data.description.getWebsite()}
+                                <a href={data.website} target="_blank" rel="noopener noreferrer">
+                                    {data.website}
                                 </a>
                             </TableCell>
                             <TableCell></TableCell>

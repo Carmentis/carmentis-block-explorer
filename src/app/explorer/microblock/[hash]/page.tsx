@@ -1,31 +1,30 @@
 'use client'
 
 import { useParams, useRouter } from "next/navigation";
-import * as sdk from "@cmts-dev/carmentis-sdk/client";
-import { MicroBlock } from "@cmts-dev/carmentis-sdk/client";
+import {Hash, Microblock} from "@cmts-dev/carmentis-sdk/client";
 import useSWR from "swr";
 import { useAtomValue } from "jotai/index";
 import { networkAtom } from "@/atoms/network.atom";
 import Link from "next/link";
 import { PageTitle } from "@/app/components/pagetitle";
+import {useBlockchain, useExplorer} from "@/app/layout";
 
 const fetcher = async (input: string[]) => {
     console.assert(Array.isArray(input) && input.length === 2);
     console.assert(typeof input[1] === "string");
-    const hash = input[1];
-    const c = await sdk.blockchain.blockchainQuery.getMicroblockContentObject(hash);
-    return c;
+    const hash = Hash.from(input[1]);
+    const blockchain = useExplorer();
+    const mb = await blockchain.getMicroBlock(hash);
+    return mb;
 }
 
 export default function MicroBlockExplorer() {
     const network = useAtomValue(networkAtom);
-    sdk.blockchain.blockchainQuery.setNode(network);
-    sdk.blockchain.blockchainCore.setNode(network);
 
     // load the params
     const params = useParams<{ hash: string }>();
     const hash = params.hash;
-    const { data, isLoading, error } = useSWR<MicroBlock>(
+    const { data, isLoading, error } = useSWR<Microblock>(
         ["getMicroblock", hash], fetcher
     );
 
@@ -66,7 +65,7 @@ export default function MicroBlockExplorer() {
     );
 }
 
-const DataDisplay = ({ data }: { data: MicroBlock }) => {
+const DataDisplay = ({ data }: { data: Microblock }) => {
     const router = useRouter();
     // compute the previous hash link
     const height = data.getHeight();
@@ -86,19 +85,19 @@ const DataDisplay = ({ data }: { data: MicroBlock }) => {
                             </div>
                             <div>
                                 <p className="text-sm text-gray-500">Height</p>
-                                <p className="font-medium">{data.getHeight()}</p>
+                                <p className="font-medium">{height}</p>
                             </div>
                             <div>
                                 <p className="text-sm text-gray-500">Previous Hash</p>
                                 {height !== 1 ? (
                                     <Link 
-                                        href={`/explorer/microblock/${previousHash}`}
+                                        href={`/explorer/microblock/${previousHash.encode()}`}
                                         className="font-mono text-sm text-blue-600 hover:text-blue-800 break-all"
                                     >
-                                        {previousHash}
+                                        {previousHash.encode()}
                                     </Link>
                                 ) : (
-                                    <p className="font-mono text-sm break-all">{previousHash}</p>
+                                    <p className="font-mono text-sm break-all">{previousHash.encode()}</p>
                                 )}
                             </div>
                         </div>
@@ -139,11 +138,11 @@ const DataDisplay = ({ data }: { data: MicroBlock }) => {
                                 </tr>
                             </thead>
                             <tbody className="bg-white divide-y divide-gray-200">
-                                {data.getSections().map((section) => (
-                                    <tr key={section.getId()} className="hover:bg-blue-50">
-                                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-700">{section.getId()}</td>
-                                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-700">{section.getLabel()}</td>
-                                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-700">{section.getSize()} bytes</td>
+                                {data.getAllSections().map((section) => (
+                                    <tr key={section.type} className="hover:bg-blue-50">
+                                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-700">{section.type}</td>
+                                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-700">{section.type}</td>
+                                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-700">{section.data.length} bytes</td>
                                     </tr>
                                 ))}
                             </tbody>

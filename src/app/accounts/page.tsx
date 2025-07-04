@@ -1,28 +1,35 @@
 'use client';
 
-import {useAtomValue} from "jotai/index";
-import {networkAtom} from "@/atoms/network.atom";
-import * as sdk from "@cmts-dev/carmentis-sdk/client";
+import {Hash, PublicSignatureKey, StringSignatureEncoder} from "@cmts-dev/carmentis-sdk/client";
 import useSWR from "swr";
-import {Card, CardContent} from "@mui/material";
 import {DynamicTableComponent} from "@/components/table.component";
 import Skeleton from "react-loading-skeleton";
 import {useRouter} from "next/navigation";
 import { PageTitle } from "@/app/components/pagetitle";
+import {useBlockchain, useExplorer} from "@/app/layout";
 
+interface AccountDescription {
+    publicKey: PublicSignatureKey,
+    balance: number,
+    hash: string,
+}
 
 const fetcher = async () =>  {
-    const accountsHash : string[] = await sdk.blockchain.blockchainQuery.getAccounts();
+    const explorer = useExplorer();
+    const blockchain = useBlockchain();
+    const accountsHash = await explorer.getAccounts();
     const accounts = [];
     for (let i = 0; i < accountsHash.length; i++) {
         const accountHash = accountsHash[i];
-        const accountData = await sdk.blockchain.blockchainQuery.getAccountState(accountHash);
-        accounts.push(
-            {
-                ...accountData,
-                hash: accountHash
-            }
-        );
+        const accountData = await explorer.getAccountState(accountHash);
+        const account = await blockchain.loadAccount(accountHash);
+        const accountPublicKey =  await account.getPublicKey();
+        const accountDescription: AccountDescription = {
+            publicKey: accountPublicKey,
+            balance: accountData.balance,
+            hash: accountHash.encode()
+        }
+        accounts.push(accountDescription);
     }
     return accounts;
 
@@ -31,20 +38,18 @@ const fetcher = async () =>  {
 
 export default function Accounts() {
     // set the node parameters
-    const network = useAtomValue(networkAtom);
-    sdk.blockchain.blockchainQuery.setNode(network);
-    sdk.blockchain.blockchainCore.setNode(network);
     const router = useRouter();
+    const explorer = useExplorer();
 
     const {data, error} = useSWR(
         ['getAccounts'], fetcher
     );
-    const renderRow = async (row : {hash: string, balance: number}) => {
-        const vb = new sdk.blockchain.accountVb(row.hash);
-        await vb.load()
-        const pk = vb.getPublicKey();
+    const renderRow = async (row : AccountDescription) => {
+        const pk = row.publicKey;
+        const sigEncoder = StringSignatureEncoder.defaultStringSignatureEncoder();
+        const taggedPublicKey = sigEncoder.encodePublicKey(pk);
         return [
-            <td key={0} onClick={() => router.push(`/accounts/publicKey/${pk}`)}>{pk}</td>,
+            <td key={0} onClick={() => router.push(`/accounts/publicKey/${taggedPublicKey}`)}>{pk.getPublicKeyAsString()}</td>,
             <td key={1}>{row.balance}</td>
         ]
     }

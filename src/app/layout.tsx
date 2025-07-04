@@ -11,12 +11,14 @@ import './globals.css';
 // Components
 import {Navbar} from '@/app/components/navbar';
 import {Sidebar} from '@/app/components/sidebar';
-import * as sdk from '@cmts-dev/carmentis-sdk/client';
+import {Blockchain, Explorer, ProviderFactory} from '@cmts-dev/carmentis-sdk/client';
 import {JotaiProvider} from "@/components/jotai.component";
 import {SWRConfig} from "swr";
 import axios from "axios";
 import {PublicEnvScript} from "next-runtime-env";
 import { useState, useEffect } from 'react';
+import {useAtomValue} from "jotai";
+import {networkAtom} from "@/atoms/network.atom";
 
 const SWR_CONFIG = {
     refreshInterval: 1000,
@@ -24,10 +26,26 @@ const SWR_CONFIG = {
     fetcher: (url: string) => axios.get(url).then(res => res.data)
 }
 
+
+export function useBlockchain() {
+    // const node = process.env.NEXT_PUBLIC_NODE_URL;
+    const node = useAtomValue(networkAtom);
+    const provider = ProviderFactory.createInMemoryProviderWithExternalProvider(node as string);
+    return Blockchain.createFromProvider(provider);
+}
+
+export function useExplorer() {
+   // const node = process.env.NEXT_PUBLIC_NODE_URL;
+    const node = useAtomValue(networkAtom);
+    const provider = ProviderFactory.createInMemoryProviderWithExternalProvider(node as string);
+    return Explorer.createFromProvider(provider);
+}
+
 export default function RootLayout(
     {children}: Readonly<{ children: React.ReactNode; }>
 ) {
-    sdk.blockchain.blockchainQuery.setNode(process.env.NEXT_PUBLIC_NODE_URL);
+
+    const explorer = useExplorer();
 
     // State to track if sidebar is open (for mobile)
     const [sidebarOpen, setSidebarOpen] = useState(false);

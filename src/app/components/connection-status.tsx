@@ -1,7 +1,7 @@
 'use client'
 
 import { useState, useEffect } from 'react';
-import * as sdk from "@cmts-dev/carmentis-sdk/client";
+import {Blockchain, ProviderFactory} from "@cmts-dev/carmentis-sdk/client";
 import { useAtomValue } from 'jotai';
 import { networkAtom } from "@/atoms/network.atom";
 import {Tooltip} from "@mui/material";
@@ -17,7 +17,11 @@ export function NodeConnectionStatus() {
         const checkConnection = async () => {
             try {
                 // Try to get chain status as a simple ping
-                await sdk.blockchain.blockchainQuery.getChainStatus();
+                const blockchain = Blockchain.createFromProvider(
+                    ProviderFactory.createInMemoryProviderWithExternalProvider(network)
+                );
+                const explorer = blockchain.getExplorer(); // TODO check node is alive
+                //await explorer.getChainStatus();
                 if (isMounted) setIsConnected(true);
             } catch (error) {
                 if (isMounted) setIsConnected(false);

@@ -1,30 +1,38 @@
 'use client';
 
 import { useParams, useRouter } from "next/navigation";
-import * as sdk from '@cmts-dev/carmentis-sdk/client';
+import {Hash, VB_ACCOUNT, VB_APP_LEDGER, VB_APPLICATION, VB_ORGANIZATION, VB_VALIDATOR_NODE} from '@cmts-dev/carmentis-sdk/client';
 import useSWR from "swr";
 import { PageTitle } from "@/app/components/pagetitle";
 import TableMicroBlocks from "@/app/components/table-micro-blocks";
 import { useAtomValue } from "jotai/index";
 import { networkAtom } from "@/atoms/network.atom";
+import {useBlockchain, useExplorer} from "@/app/layout";
 
 const fetcher = async (input: string[]) => {
     console.assert(Array.isArray(input) && input.length === 2);
     console.assert(typeof input[1] === "string");
-    const hash = input[1];
+    const hash = Hash.from(input[1]);
+    const explorer = useExplorer();
+    const blockchain = useBlockchain();
+    const info = await explorer.getVirtualBlockchainState(hash);
+    const content = await explorer.getVirtualBlockchainHashes(
+        Hash.from(info.lastMicroblockHash)
+    );
+    /*
     const info = await sdk.blockchain.blockchainQuery.getVirtualBlockchainInfo(hash);
     const content = await sdk.blockchain.blockchainQuery.getVirtualBlockchainContent(hash);
+
+
+     */
+
     return { info, content };
 }
 
 export default function Page() {
     const params = useParams<{ hash: string }>();
     const hash = params.hash;
-    const network = useAtomValue(networkAtom);
     const router = useRouter();
-
-    sdk.blockchain.blockchainQuery.setNode(network);
-    sdk.blockchain.blockchainCore.setNode(network);
 
     const { data, isLoading, error } = useSWR(["getAppLedger", hash], fetcher);
 
@@ -64,13 +72,11 @@ export default function Page() {
     // Get the type label based on the type constant
     const getTypeLabel = () => {
         switch (type) {
-            case sdk.constants.ID.OBJ_APP_LEDGER: return "App Ledger";
-            case sdk.constants.ID.OBJ_ACCOUNT: return "Account";
-            case sdk.constants.ID.OBJ_APP_USER: return "App User";
-            case sdk.constants.ID.OBJ_ORACLE: return "Oracle";
-            case sdk.constants.ID.OBJ_APPLICATION: return "Application";
-            case sdk.constants.ID.OBJ_ORGANIZATION: return "Organisation";
-            case sdk.constants.ID.OBJ_VALIDATOR_NODE: return "Validator Node";
+            case VB_APP_LEDGER: return "App Ledger";
+            case VB_ACCOUNT: return "Account";
+            case VB_APPLICATION: return "Application";
+            case VB_ORGANIZATION: return "Organisation";
+            case VB_VALIDATOR_NODE: return "Validator Node";
             default: return "Unknown";
         }
     };
@@ -78,13 +84,11 @@ export default function Page() {
     // Get the type color based on the type constant
     const getTypeColor = () => {
         switch (type) {
-            case sdk.constants.ID.OBJ_APP_LEDGER: return "bg-blue-100 text-blue-800";
-            case sdk.constants.ID.OBJ_ACCOUNT: return "bg-green-100 text-green-800";
-            case sdk.constants.ID.OBJ_APP_USER: return "bg-purple-100 text-purple-800";
-            case sdk.constants.ID.OBJ_ORACLE: return "bg-yellow-100 text-yellow-800";
-            case sdk.constants.ID.OBJ_APPLICATION: return "bg-indigo-100 text-indigo-800";
-            case sdk.constants.ID.OBJ_ORGANIZATION: return "bg-pink-100 text-pink-800";
-            case sdk.constants.ID.OBJ_VALIDATOR_NODE: return "bg-red-100 text-red-800";
+            case VB_APP_LEDGER: return "bg-blue-100 text-blue-800";
+            case VB_ACCOUNT: return "bg-green-100 text-green-800";
+            case VB_APPLICATION: return "bg-indigo-100 text-indigo-800";
+            case VB_ORGANIZATION: return "bg-pink-100 text-pink-800";
+            case VB_VALIDATOR_NODE: return "bg-red-100 text-red-800";
             default: return "bg-gray-100 text-gray-800";
         }
     };
@@ -122,7 +126,7 @@ export default function Page() {
                                 </div>
                                 <div>
                                     <p className="text-sm text-gray-500">Number of Microblocks</p>
-                                    <p className="font-medium">{data.content.list.length}</p>
+                                    <p className="font-medium">{data.info.height}</p>
                                 </div>
                             </div>
                         </div>
@@ -136,7 +140,7 @@ export default function Page() {
                         <p className="text-gray-600 mb-6">
                             This virtual blockchain contains the following microblocks. Click on a microblock to view its details.
                         </p>
-                        <TableMicroBlocks hashes={data.content.list} />
+                        <TableMicroBlocks hashes={data.content} />
                     </div>
                 </div>
 

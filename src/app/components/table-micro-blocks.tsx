@@ -1,29 +1,32 @@
 import {useRouter} from "next/navigation";
 import {useAtomValue} from "jotai/index";
 import {networkAtom} from "@/atoms/network.atom";
-import {BlockchainQueryFabric} from "@cmts-dev/carmentis-sdk/client";
+import {Hash} from "@cmts-dev/carmentis-sdk/client";
 import {DynamicTableComponent} from "@/components/table.component";
+import {useBlockchain, useExplorer} from "@/app/layout";
 
 export type TableMicroBlocksProps = {
-    hashes: string[]
+    hashes: Hash[]
 }
 export default function TableMicroBlocks(props: TableMicroBlocksProps) {
     const router = useRouter();
-    const network = useAtomValue(networkAtom);
-    const client = BlockchainQueryFabric.build(network);
+    const explorer = useExplorer();
 
-    async function renderMicroBlock( data: string ) {
+    async function renderMicroBlock( hash: Hash ) {
         //const c = await sdk.blockchain.blockchainQuery.getMicroblockContent(data.hash)
-        const c = await client.getMicroBlock(data);
+        const mb = await explorer.getMicroBlock(hash);
+        //const header = await explorer.getMicroBlockHeader(hash);
+
+
         return [
-            <td key={0}>{data}</td>,
-            <td key={1}>{c.getNumberOfSections()}</td>,
-            <td key={2}>{c.getDate().toLocaleString()}</td>,
+            <td key={0}>{hash.encode()}</td>,
+            <td key={1}>{mb.getNumberOfSections()}</td>,
+            <td key={2}>{mb.header.timestamp.toLocaleString()}</td>,
         ]
     }
 
     return <DynamicTableComponent
-        header={["Micro-Block Hash", "Sections", "Timestamp"]}
+        header={["Micro-Block Hash", "Height", "Timestamp"]}
         data={props.hashes}
         renderRow={renderMicroBlock}
         onRowClicked={(data) => {router.push(`/explorer/microblock/${data}`)}}
