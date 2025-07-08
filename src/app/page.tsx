@@ -16,13 +16,6 @@ async function loadCurrentHeight() {
     const explorer = useExplorer();
     // TODO Missing load current chain implementation
     return 0;
-    /*
-    return explorer.getVirtualBlockchainHashes()
-    const status = await sdk.blockchain.blockchainQuery.getChainStatus()
-    console.log(status)
-    return status
-
-     */
 }
 
 
@@ -39,22 +32,22 @@ export default function Home() {
 const LIMIT = 10;
 function LatestBlocks() {
     const router = useRouter();
-    const network = useAtomValue(networkAtom);
-    sdk.blockchain.blockchainQuery.setNode(network);
-    sdk.blockchain.blockchainCore.setNode(network);
+
 
 
     const {data, isLoading, error} = useSWR(["getCurrentHeight"], loadCurrentHeight, { refreshInterval: 1000 });
     if (error) return <>An error occurred. Error: {error}</>
     if (isLoading || !data) return <Skeleton/>
     const masterBlockIds = [];
-    const lastBlockHeight = data.lastBlockHeight;
+    const lastBlockHeight = 0; // data.lastBlockHeight; // TODO: implement
     for (let i = lastBlockHeight; i > Math.max(lastBlockHeight - LIMIT, 0); i--) {
         masterBlockIds.push(i);
     }
 
     async function renderRow( blockHeight: number ) {
-        const blockData = await sdk.blockchain.blockchainQuery.getBlockInfoObject(blockHeight);
+        return []
+            // TODO: fix this statement: const blockData = await sdk.blockchain.blockchainQuery.getBlockInfoObject(blockHeight);
+        /*
         return [
             <td key={0}>{blockHeight}</td>,
             <td key={1}>{blockData.isAnchored() ? "Anchored" : "Running"}</td>,
@@ -63,6 +56,8 @@ function LatestBlocks() {
             <td key={4}>{blockData.getProposerNode()}</td>,
             <td key={5}>{blockData.getProposedAt().toLocaleString()}</td>,
         ]
+
+         */
     }
 
     return <LatestBlocksDisplay>

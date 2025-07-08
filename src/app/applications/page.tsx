@@ -11,27 +11,23 @@ import {useEffect} from "react";
 import {useRouter} from "next/navigation";
 import { PageTitle } from "@/app/components/pagetitle";
 import {useBlockchain, useExplorer} from "@/app/layout";
-
-const fetcher = async ([]: [string]) =>  {
-    const explorer = useExplorer();
-    return await explorer.getApplications();
-}
+import {useAsync} from "react-use";
 
 export default function Applications() {
     const router = useRouter();
-    const network = useAtomValue(networkAtom)
+    const blockchain = useBlockchain();
+    const explorer = useExplorer();
 
-    const {data, mutate} = useSWR(
-        ['getApplications'], fetcher
-    );
+    const {value: data, loading, error} = useAsync(async () => {
+        return await explorer.getApplications();
+    })
 
     function goToOrganisation(organisationId: string) {
         router.push(`/organisations/${organisationId}`)
     }
 
-    const header = ["Name",  "Website", "Version", "Organisation"]
+    const header = ["Name",  "Website", "Organisation"]
     const renderRow = async (row : Hash) => {
-        const blockchain = useBlockchain();
         const application = await blockchain.loadApplication(row);
         const declaration = await application.getDeclaration();
         const description = await application.getDescription();
@@ -42,18 +38,12 @@ export default function Applications() {
                 </Tooltip>
             </>,
             <>{description.homepageUrl}</>,
-            <>--</>,
-            <>
-
-            </>
+            <></>
         ]
     }
 
-    useEffect(() => {
-        mutate();
-    });
-
-    if (!data) return <Skeleton/>
+    if (loading) return <Skeleton/>
+    if (!data || error) return <>An error occurred: {error?.message}</>
     return (
         <>
             <PageTitle title="Applications" />

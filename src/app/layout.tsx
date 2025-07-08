@@ -11,7 +11,7 @@ import './globals.css';
 // Components
 import {Navbar} from '@/app/components/navbar';
 import {Sidebar} from '@/app/components/sidebar';
-import {Blockchain, Explorer, ProviderFactory} from '@cmts-dev/carmentis-sdk/client';
+import {Blockchain, Explorer, Hash, ProviderFactory} from '@cmts-dev/carmentis-sdk/client';
 import {JotaiProvider} from "@/components/jotai.component";
 import {SWRConfig} from "swr";
 import axios from "axios";
@@ -96,40 +96,45 @@ export default function RootLayout(
     }, [sidebarOpen]);
 
     return (
-        <SWRConfig value={SWR_CONFIG}>
-            <JotaiProvider>
-                <PublicEnvScript/>
-                <html lang="en" className="h-full">
-                    <body className="bg-gray-50 min-h-screen">
-                        <Navbar />
-                        <div className="flex min-h-screen pt-[60px]">
-                            {/* Sidebar - hidden on mobile by default, shown when sidebarOpen is true */}
-                            <div className={`${sidebarOpen ? 'block' : 'hidden'} lg:block`}>
-                                <Sidebar />
-                            </div>
 
-                            {/* Main Content - full width on mobile, adjusted on desktop */}
-                            <div className={`flex-1 transition-all duration-300 w-full 
-                                ${sidebarOpen ? 'lg:ml-64' : 'lg:ml-0'} 
-                                lg:ml-64`}
-                            >
-                                <main className="p-4 md:p-6">
-                                    <div className="mb-6">
-                                        {children}
-                                    </div>
-                                </main>
+        <html lang="en" className="h-full">
+        <body className="bg-gray-50 min-h-screen">
 
-                                {/* Footer */}
-                                <footer className="px-4 md:px-6 py-4 border-t border-gray-200">
-                                    <div className="text-center text-sm text-gray-600">
-                                        © Copyright <span className="font-semibold">Carmentis SAS</span>. All Rights Reserved
-                                    </div>
-                                </footer>
-                            </div>
+            <SWRConfig value={SWR_CONFIG}>
+                <JotaiProvider>
+
+                    <Navbar />
+                    <div className="flex min-h-screen pt-[60px]">
+                        {/* Sidebar - hidden on mobile by default, shown when sidebarOpen is true */}
+                        <div className={`${sidebarOpen ? 'block' : 'hidden'} lg:block`}>
+                            <Sidebar />
                         </div>
-                    </body>
-                </html>
-            </JotaiProvider>
-        </SWRConfig>
+
+                        {/* Main Content - full width on mobile, adjusted on desktop */}
+                        <div className={`flex-1 transition-all duration-300 w-full 
+                                    ${sidebarOpen ? 'lg:ml-64' : 'lg:ml-0'} 
+                                    lg:ml-64`}
+                        >
+                            <main className="p-4 md:p-6">
+                                <div className="mb-6">
+                                    {children}
+                                </div>
+                            </main>
+
+                            {/* Footer */}
+                            <footer className="px-4 md:px-6 py-4 border-t border-gray-200">
+                                <div className="text-center text-sm text-gray-600">
+                                    © Copyright <span className="font-semibold">Carmentis SAS</span>. All Rights Reserved
+                                </div>
+                            </footer>
+
+                            <PublicEnvScript/>
+
+                        </div>
+                    </div>
+                </JotaiProvider>
+            </SWRConfig>
+            </body>
+        </html>
     );
 }
