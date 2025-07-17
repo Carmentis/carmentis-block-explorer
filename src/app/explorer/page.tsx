@@ -1,14 +1,13 @@
 'use client'
 
-import { PageTitle } from '@/app/components/pagetitle';
-import { useState } from 'react';
-import { BlockchainQuery, ChainStatus } from "@cmts-dev/carmentis-sdk/client";
+import {PageTitle} from '@/app/components/pagetitle';
+import {useState} from 'react';
+import {BlockchainQuery, ChainStatus} from "@cmts-dev/carmentis-sdk/client";
 import useSWR from "swr";
 import Loading from "@/app/nodes/loading";
-import { ErrorDisplay } from "@/app/components/error-display";
+import {ErrorDisplay} from "@/app/components/error-display";
 import useBlockchainQuery from "@/components/node.hook";
-import Skeleton from "react-loading-skeleton";
-import { useRouter } from "next/navigation";
+import {useRouter} from "next/navigation";
 
 const chainStatusFetcher = async ([, client]: [string, BlockchainQuery]) => {
     return await client.getChainStatus()

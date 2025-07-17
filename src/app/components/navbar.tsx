@@ -6,7 +6,6 @@ import Image from "next/image";
 import {useAtom} from 'jotai'
 import {networkAtom} from "@/atoms/network.atom";
 import {NodeConnectionStatus} from "@/app/components/connection-status";
-import {} from "@cmts-dev/carmentis-sdk/client";
 import {useWindowSize} from "react-use";
 
 function useWindowWidth() {

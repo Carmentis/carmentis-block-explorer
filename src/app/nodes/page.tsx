@@ -2,12 +2,11 @@
 
 import {Hash} from "@cmts-dev/carmentis-sdk/client";
 import Skeleton from "react-loading-skeleton";
-import {Card, CardContent} from "@mui/material";
 import TableComponent from "@/components/table.component";
 import {useAtomValue} from "jotai/index";
 import {networkAtom} from "@/atoms/network.atom";
 import useSWR from "swr";
-import { PageTitle } from "@/app/components/pagetitle";
+import {PageTitle} from "@/app/components/pagetitle";
 import {useExplorer} from "@/app/layout";
 
 const fetcher = async () =>  {

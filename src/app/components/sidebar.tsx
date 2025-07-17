@@ -2,7 +2,7 @@
 
 import ActiveLink from "@/app/components/myLink";
 import {usePathname} from "next/navigation";
-import { useEffect, useState } from "react";
+import {useEffect, useState} from "react";
 
 export function Sidebar() {
     const pathname = usePathname();

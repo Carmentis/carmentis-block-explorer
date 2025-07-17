@@ -2,7 +2,6 @@
 
 import {
     Box,
-    Button,
     CircularProgress,
     Container,
     Paper,
@@ -15,29 +14,26 @@ import {
 } from '@mui/material';
 import useSWR from 'swr';
 import {useParams, useRouter} from "next/navigation";
-import {Hash, OrganizationDescription} from '@cmts-dev/carmentis-sdk/client';
+import {
+    Hash,
+    OrganisationWrapper,
+    OrganizationDescription,
+    StringSignatureEncoder
+} from '@cmts-dev/carmentis-sdk/client';
 import React from 'react';
 import AvatarPlaceholder from 'boring-avatars';
-import {useBlockchain, useExplorer} from "@/app/layout";
-
-type OrganisationDetailProps = {
-    data: OrganizationDescription;
-};
-
-// Fetcher function to be implemented by you
-const fetcher = async (organisationHash: Hash) => {
-   const blockchain = useBlockchain();
-   const vb = await blockchain.loadOrganization(organisationHash);
-   return await vb.getDescription();
-};
+import {useBlockchain} from "@/app/layout";
+import {useAsync} from "react-use";
 
 
 
 export default function OrganisationPage() {
     const params = useParams<{hash: string}>();
-    const {data, error, isLoading} = useSWR<OrganizationDescription>(
-        ["getSingleOrganisation", params.hash],
-        async ([, hash]: [string,string]) => fetcher(Hash.from(hash)));
+    const organisationId = Hash.from(params.hash);
+    const blockchain = useBlockchain();
+    const {value: data, loading: isLoading, error} = useAsync(async () => {
+        return blockchain.loadOrganization(organisationId);
+    });
 
 
     if (isLoading) {
@@ -59,25 +55,26 @@ export default function OrganisationPage() {
     }
 
     return <OrganisationDetail
-        data={data}
+        organisation={data}
     />;
 }
 
 
 
 
-const OrganisationDetail: React.FC<OrganisationDetailProps> = ({data}: {data: OrganizationDescription}) => {
+const OrganisationDetail = ({organisation}: {organisation: OrganisationWrapper}) => {
     const router = useRouter();
+    const sigEncoder = StringSignatureEncoder.defaultStringSignatureEncoder();
     return (
         <Container component={Paper} sx={{p: 4}}>
             <Box display="flex" flexDirection="column" alignItems="center" mb={4}>
                 <AvatarPlaceholder
                     size={100}
-                    name={data.name}
+                    name={organisation.getName()}
                     variant="marble"
                 />
                 <Typography variant="h5" mt={2}>
-                    {data.name}
+                    {organisation.getName()}
                 </Typography>
             </Box>
             <TableContainer>
@@ -85,12 +82,14 @@ const OrganisationDetail: React.FC<OrganisationDetailProps> = ({data}: {data: Or
                     <TableBody>
                         <TableRow>
                             <TableCell><Typography variant="subtitle1">Location</Typography></TableCell>
-                            <TableCell>{`${data.city} (${data.countryCode})`}</TableCell>
+                            <TableCell>{`${organisation.getCity()} (${organisation.getCountryCode()})`}</TableCell>
                             <TableCell></TableCell>
                         </TableRow>
                         <TableRow>
                             <TableCell><Typography variant="subtitle1">Public Key</Typography></TableCell>
-                            <TableCell>--</TableCell>
+                            <TableCell>
+                                {sigEncoder.encodePublicKey(organisation.getPublicKey())}
+                            </TableCell>
                             <TableCell>
                             </TableCell>
                         </TableRow>
@@ -98,8 +97,8 @@ const OrganisationDetail: React.FC<OrganisationDetailProps> = ({data}: {data: Or
                         <TableRow>
                             <TableCell><Typography variant="subtitle1">Website</Typography></TableCell>
                             <TableCell>
-                                <a href={data.website} target="_blank" rel="noopener noreferrer">
-                                    {data.website}
+                                <a href={organisation.getWebsite()} target="_blank" rel="noopener noreferrer">
+                                    {organisation.getWebsite()}
                                 </a>
                             </TableCell>
                             <TableCell></TableCell>

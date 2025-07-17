@@ -1,12 +1,11 @@
 'use client'
 
-import { PageTitle } from "@/app/components/pagetitle";
-import { useParams, useRouter } from "next/navigation";
+import {PageTitle} from "@/app/components/pagetitle";
+import {useParams, useRouter} from "next/navigation";
 import useSWR from "swr";
-import Skeleton from "react-loading-skeleton";
-import { useAtomValue } from "jotai";
-import { networkAtom } from "@/atoms/network.atom";
-import { BlockchainQuery, BlockchainQueryFabric } from "@cmts-dev/carmentis-sdk/client";
+import {useAtomValue} from "jotai";
+import {networkAtom} from "@/atoms/network.atom";
+import {BlockchainQuery, BlockchainQueryFabric} from "@cmts-dev/carmentis-sdk/client";
 import TableMicroBlocks from "@/app/components/table-micro-blocks";
 
 export default function MasterBlockExplorer() {

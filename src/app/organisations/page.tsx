@@ -1,54 +1,43 @@
 'use client';
 
-import {CMTSToken, Hash} from "@cmts-dev/carmentis-sdk/client";
-import {AccountState} from "@cmts-dev/carmentis-sdk/client";
+import {AccountState, CMTSToken, Hash, StringSignatureEncoder} from "@cmts-dev/carmentis-sdk/client";
 import Skeleton from "react-loading-skeleton";
-import {Card, CardContent} from "@mui/material";
 import {DynamicTableComponent} from "@/components/table.component";
 import {useAtomValue} from "jotai/index";
 import {networkAtom} from "@/atoms/network.atom";
-import useSWR from "swr";
-import {useEffect} from "react";
 import {useRouter} from "next/navigation";
-import { PageTitle } from "@/app/components/pagetitle";
+import {PageTitle} from "@/app/components/pagetitle";
 import {useBlockchain, useExplorer} from "@/app/layout";
 import {useAsync} from "react-use";
+import {Tooltip} from "@mui/material";
 
 
 export default function OrganisationsPage() {
     const router = useRouter();
-    const network = useAtomValue(networkAtom);
     const blockchain = useBlockchain();
-    const explorer = useExplorer();
 
     const {value: data, loading, error} = useAsync(async () => {
-        const organisationsHash : Hash[] = await explorer.getOrganizations();
-        const organisations = [];
-        for (let i = 0; i < organisationsHash.length; i++) {
-            const organisationHash = organisationsHash[i];
-            const organisationAccountData = await explorer.getAccountState(organisationHash);
-            organisations.push(
-                {
-                    account: organisationAccountData,
-                    hash: organisationHash
-                }
-            );
-        }
-        return organisations;
+        return await blockchain.getAllOrganisations();
     })
 
     const header = ["Name",  "Hash", "Location", "Website", "Public Key", "Balance"]
-    const renderRow = async (row : {hash: Hash, account: AccountState}) => {
-        // load the organisation
-        const balance = CMTSToken.createCMTS(0);
-        const organisation = await blockchain.loadOrganization(row.hash);
-        const descripton = await organisation.getDescription();
+    const renderRow = async (organisationId : Hash) => {
+        const organisation = await blockchain.loadOrganization(organisationId);
+        const publicKey = organisation.getPublicKey();
+        const sigEncoder = StringSignatureEncoder.defaultStringSignatureEncoder();
+        const pk = sigEncoder.encodePublicKey(publicKey);
+        const accountHash = await blockchain.getAccountHashFromPublicKey(publicKey);
+        const balance = await blockchain.getAccountBalance(accountHash);
         return [
-            <>{descripton.name}</>,
-            <>{row.hash.encode()}</>,
-            <>{descripton.city}</>,
-            <>{descripton.countryCode}</>,
-            <>--</>,
+            <>{organisation.getName()}</>,
+            <>{organisationId.encode()}</>,
+            <>{`${organisation.getCity()} (${organisation.getCountryCode()})`}</>,
+            <>{organisation.getWebsite()}</>,
+            <>
+                <Tooltip title={pk}>
+                    <>{pk.slice(0, 20)}...{pk.slice(-20)}</>
+                </Tooltip>,
+            </>,
             <>{balance.toString()}</>
         ]
     }
@@ -62,7 +51,7 @@ export default function OrganisationsPage() {
                 header={header}
                 data={data}
                 renderRow={renderRow}
-                onRowClicked={(row) => router.push(`/organisations/${row.hash.encode()}`)}
+                onRowClicked={(row) => router.push(`/organisations/${row.encode()}`)}
             />
         </>
     )

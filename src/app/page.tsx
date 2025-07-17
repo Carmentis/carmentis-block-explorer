@@ -4,12 +4,9 @@ import {PropsWithChildren} from 'react';
 import {PageTitle} from '@/app/components/pagetitle';
 import useSWR from "swr";
 import Skeleton from "react-loading-skeleton";
-import {} from '@cmts-dev/carmentis-sdk/client';
-import {useAtomValue} from "jotai";
-import {networkAtom} from "@/atoms/network.atom";
 import {DynamicTableComponent} from "@/components/table.component";
 import {useRouter} from "next/navigation";
-import { useExplorer } from './layout';
+import {useExplorer} from './layout';
 
 
 async function loadCurrentHeight() {

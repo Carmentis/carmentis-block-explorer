@@ -1,4 +1,4 @@
-import { PageTitle } from "@/app/components/pagetitle";
+import {PageTitle} from "@/app/components/pagetitle";
 
 export default function Loading() {
     return (

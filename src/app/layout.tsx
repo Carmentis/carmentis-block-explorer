@@ -11,12 +11,12 @@ import './globals.css';
 // Components
 import {Navbar} from '@/app/components/navbar';
 import {Sidebar} from '@/app/components/sidebar';
-import {Blockchain, Explorer, Hash, ProviderFactory} from '@cmts-dev/carmentis-sdk/client';
+import {BlockchainFacade, Explorer, ProviderFactory} from '@cmts-dev/carmentis-sdk/client';
 import {JotaiProvider} from "@/components/jotai.component";
 import {SWRConfig} from "swr";
 import axios from "axios";
 import {PublicEnvScript} from "next-runtime-env";
-import { useState, useEffect } from 'react';
+import {useEffect, useState} from 'react';
 import {useAtomValue} from "jotai";
 import {networkAtom} from "@/atoms/network.atom";
 
@@ -30,8 +30,7 @@ const SWR_CONFIG = {
 export function useBlockchain() {
     // const node = process.env.NEXT_PUBLIC_NODE_URL;
     const node = useAtomValue(networkAtom);
-    const provider = ProviderFactory.createInMemoryProviderWithExternalProvider(node as string);
-    return Blockchain.createFromProvider(provider);
+    return BlockchainFacade.createFromNodeUrl(node);
 }
 
 export function useExplorer() {

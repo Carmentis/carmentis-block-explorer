@@ -1,20 +1,17 @@
 'use client';
 
-import React, {useState, useRef, useEffect} from "react";
+import React, {useEffect, useRef, useState} from "react";
 import "react-toastify/dist/ReactToastify.css";
 import {useAsync} from "react-use";
-import {proofLoader, blockchain} from "@cmts-dev/carmentis-sdk/client";
 import {ErrorBoundary} from "react-error-boundary";
 import {useAtomValue} from "jotai";
 import {networkAtom} from "@/atoms/network.atom";
-import { PageTitle } from "@/app/components/pagetitle";
+import {PageTitle} from "@/app/components/pagetitle";
 import Link from "next/link";
+import {useBlockchain} from "@/app/layout";
 
 export default function ProofChecker() {
-    // load the NODE_URL env variable
-    const nodeUrl = useAtomValue(networkAtom);
-    blockchain.blockchainQuery.setNode(nodeUrl);
-    blockchain.blockchainCore.setNode(nodeUrl)
+    const blockchain = useBlockchain();
 
     const [proof, setProof] = useState<Record<string, any> | undefined>();
     return (
@@ -170,15 +167,11 @@ function ProofCheckerUpload({onUpload}: { onUpload: (proof: any) => void }) {
 }
 
 function ProofViewer({proof, resetProof}: {resetProof: () => void, proof: Record<string, any>}) {
+    const blockchain = useBlockchain();
     const state = useAsync(async () => {
-        let loader = new proofLoader(proof);
-        try {
-            const records = await loader.load();
-            return { verified: true, records: records.records }
-        } catch (error) {
-            console.error(error)
-            return { verified: false, records: undefined }
-        }
+        const verificationResult = await blockchain.verifyProofFromJson(proof);
+        const records = await verificationResult.getInvolvedBlockHeights().map(blockHeight => verificationResult.getRecordContainedInBlockAtHeight(blockHeight));
+        return {verificationResult, records};
     });
 
     if (state.loading) {
@@ -212,10 +205,10 @@ function ProofViewer({proof, resetProof}: {resetProof: () => void, proof: Record
         );
     }
 
-    const data = state.value;
+    const {verificationResult, records} = state.value;
     const header = proof.information;
     const appLedgerId = proof.proofData.appLedgerId;
-
+    const verified = verificationResult.isVerified();
     return (
         <div className="space-y-6">
             <div className="flex justify-between items-center">
@@ -238,14 +231,14 @@ function ProofViewer({proof, resetProof}: {resetProof: () => void, proof: Record
                             <div>
                                 <p className="text-sm text-gray-500">Verification Status</p>
                                 <div className={`mt-1 inline-flex items-center px-3 py-1 rounded-full text-sm font-medium ${
-                                    data.verified 
+                                    verified 
                                         ? 'bg-green-100 text-green-800' 
                                         : 'bg-red-100 text-red-800'
                                 }`}>
                                     <span className={`w-2 h-2 rounded-full mr-2 ${
-                                        data.verified ? 'bg-green-500' : 'bg-red-500'
+                                        verified ? 'bg-green-500' : 'bg-red-500'
                                     }`}></span>
-                                    {data.verified ? 'Verified' : 'Failed'}
+                                    {verified ? 'Verified' : 'Failed'}
                                 </div>
                             </div>
                             <div>
@@ -281,13 +274,13 @@ function ProofViewer({proof, resetProof}: {resetProof: () => void, proof: Record
                 </div>
             </div>
 
-            {data.records && <ProofRecordViewer records={data.records} />}
+            {records && <ProofRecordViewer records={records} />}
         </div>
     );
 }
 
 
-function ProofRecordViewer({records}: {records: {height: number, record: Record<string, any>}[]}) {
+function ProofRecordViewer({records}: {records: {height: number, record: any}[]}) {
     return (
         <div className="mt-8">
             <h3 className="text-xl font-semibold text-gray-800 mb-6">Proof Data Visualization</h3>

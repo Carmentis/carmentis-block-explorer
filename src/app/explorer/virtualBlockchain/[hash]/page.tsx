@@ -1,12 +1,17 @@
 'use client';
 
-import { useParams, useRouter } from "next/navigation";
-import {Hash, VB_ACCOUNT, VB_APP_LEDGER, VB_APPLICATION, VB_ORGANIZATION, VB_VALIDATOR_NODE} from '@cmts-dev/carmentis-sdk/client';
+import {useParams, useRouter} from "next/navigation";
+import {
+    Hash,
+    VB_ACCOUNT,
+    VB_APP_LEDGER,
+    VB_APPLICATION,
+    VB_ORGANIZATION,
+    VB_VALIDATOR_NODE
+} from '@cmts-dev/carmentis-sdk/client';
 import useSWR from "swr";
-import { PageTitle } from "@/app/components/pagetitle";
+import {PageTitle} from "@/app/components/pagetitle";
 import TableMicroBlocks from "@/app/components/table-micro-blocks";
-import { useAtomValue } from "jotai/index";
-import { networkAtom } from "@/atoms/network.atom";
 import {useBlockchain, useExplorer} from "@/app/layout";
 
 const fetcher = async (input: string[]) => {

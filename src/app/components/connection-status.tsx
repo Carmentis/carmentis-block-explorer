@@ -1,9 +1,9 @@
 'use client'
 
-import { useState, useEffect } from 'react';
+import {useEffect, useState} from 'react';
 import {Blockchain, ProviderFactory} from "@cmts-dev/carmentis-sdk/client";
-import { useAtomValue } from 'jotai';
-import { networkAtom } from "@/atoms/network.atom";
+import {useAtomValue} from 'jotai';
+import {networkAtom} from "@/atoms/network.atom";
 import {Tooltip} from "@mui/material";
 
 export function NodeConnectionStatus() {

@@ -1,9 +1,7 @@
 import {useRouter} from "next/navigation";
-import {useAtomValue} from "jotai/index";
-import {networkAtom} from "@/atoms/network.atom";
 import {Hash} from "@cmts-dev/carmentis-sdk/client";
 import {DynamicTableComponent} from "@/components/table.component";
-import {useBlockchain, useExplorer} from "@/app/layout";
+import {useExplorer} from "@/app/layout";
 
 export type TableMicroBlocksProps = {
     hashes: Hash[]

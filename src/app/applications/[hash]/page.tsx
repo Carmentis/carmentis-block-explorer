@@ -2,31 +2,20 @@
 
 
 import {useParams} from "next/navigation";
-import {ApplicationDescription, Hash, OrganizationDescription} from '@cmts-dev/carmentis-sdk/client';
+import {
+    ApplicationDescription,
+    ApplicationWrapper,
+    Hash, OrganisationWrapper,
+    OrganizationDescription
+} from '@cmts-dev/carmentis-sdk/client';
 import useSWR from "swr";
 import Skeleton from "react-loading-skeleton";
-import {
-    Accordion,
-    AccordionDetails,
-    AccordionSummary,
-    Box,
-    Button,
-    Card,
-    CardContent,
-    Chip,
-    Container,
-    Table,
-    TableBody,
-    TableCell,
-    TableRow,
-    Typography
-} from "@mui/material";
-import ExpandMoreIcon from "@mui/icons-material/ExpandMore";
-import {useState} from "react";
-import {GenericTable} from "@/app/components/generic-table";
+import {Card, CardContent, Container, Table, TableBody, TableCell, TableRow, Typography} from "@mui/material";
 import {ErrorDisplay} from "@/app/components/error-display";
 import {useBlockchain} from "@/app/layout";
+import {useAsync} from "react-use";
 
+/*
 const fetcher = async ( input: string[] ) =>  {
     console.assert(Array.isArray(input) && input.length === 2);
     console.assert(typeof input[1] === "string" );
@@ -43,15 +32,19 @@ const fetcher = async ( input: string[] ) =>  {
         orgDesc: organisationDescription,
     }
 
-}
+}*/
 
 export default function Application() {
     // load the params
     const params = useParams<{hash: string}>();
-    const hash = params.hash;
-    const {data, isLoading, error} = useSWR(
-        [ "getApplication", hash ], fetcher
-    )
+    const hash = Hash.from(params.hash);
+    const blockchain = useBlockchain();
+    const {value: data, loading: isLoading, error} = useAsync(async () => {
+        const application = await blockchain.loadApplication(hash);
+        const organisationId = application.getOrganisationId();
+        const organisation = await blockchain.loadOrganization(organisationId);
+        return {organisation, application};
+    });
 
 
     if (error) return <ErrorDisplay error={error}/>
@@ -59,8 +52,8 @@ export default function Application() {
     return <>
         <ApplicationDescriptionComponent
             id={hash}
-            description={data.appDesc}
-            orgDesc={data.orgDesc}
+            application={data.application}
+            organisation={data.organisation}
         />
 
     </>
@@ -68,23 +61,21 @@ export default function Application() {
 }
 
 
-function ApplicationDescriptionComponent( input: { id: string, description: ApplicationDescription, orgDesc: OrganizationDescription } ) {
-    const description = input.description;
-    console.log("application description:", description)
+function ApplicationDescriptionComponent({id, application, organisation}: { id: Hash, application: ApplicationWrapper, organisation: OrganisationWrapper } ) {
+
     const items = [
-        { label: "Name", value: description.name },
-        { label: "Id", value: input.id },
-        { label: "Description", value: description.description },
-        { label: "Website", value: description.homepageUrl },
-        { label: "Logo URL", value: description.logoUrl },
-        { label: "Root domain", value: '--'},
-        { label: "Organisation", value: input.orgDesc.name },
+        { label: "Name", value: application.getName() },
+        { label: "Id", value: id.encode() },
+        { label: "Description", value: application.getDescription() },
+        { label: "Website", value: application.getWebsite()},
+        { label: "Logo URL", value: application.getLogoUrl() },
+        { label: "Organisation", value: organisation.getName() },
     ]
     return (
         <Container>
             <Card sx={{  padding: 2, boxShadow: 3}}>
                 <CardContent>
-                    <Typography variant={"h5"}>{input.description.name}</Typography>
+                    <Typography variant={"h5"}>{application.getName()}</Typography>
                     <Table>
                         <TableBody>
                             {items.map((item, index) => (
