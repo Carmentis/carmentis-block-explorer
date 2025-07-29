@@ -1,12 +1,16 @@
 'use client';
 
-import {PropsWithChildren} from 'react';
+import {PropsWithChildren, useEffect, useState} from 'react';
 import {PageTitle} from '@/app/components/pagetitle';
 import useSWR from "swr";
 import Skeleton from "react-loading-skeleton";
 import {DynamicTableComponent} from "@/components/table.component";
 import {useRouter} from "next/navigation";
-import {useExplorer} from './layout';
+import {useBlockchain, useExplorer} from './layout';
+import {useNodeUrl} from "@/hooks/useNodeUrl";
+import {useWebsocketNodeUrl} from "@/hooks/useWebsocketNodeUrl";
+import {BlockchainFacade, Optional} from "@cmts-dev/carmentis-sdk/client";
+import {Table, TableBody, TableCell, TableHead, TableRow} from "@mui/material";
 
 
 async function loadCurrentHeight() {
@@ -26,49 +30,47 @@ export default function Home() {
     );
 }
 
+
+
 const LIMIT = 10;
 function LatestBlocks() {
-    const router = useRouter();
+    const wsUrl = useWebsocketNodeUrl();
+    const [lastBlockHeight, setLastBlockHeight] = useState<Optional<number>>(Optional.none());
 
+    useEffect(() => {
+        const client = BlockchainFacade.createWebSocketForNode(wsUrl);
+        client.addCallback({
+            onNewBlock: (event) => {
+                const header = event.result.data.value.block.header;
+                const chainId = header.chain_id;
+                const height = Number.parseInt(header.height);
+                setLastBlockHeight(Optional.some(height));
+            }
+        })
+    }, [wsUrl]);
 
-
-    const {data, isLoading, error} = useSWR(["getCurrentHeight"], loadCurrentHeight, { refreshInterval: 1000 });
-    if (error) return <>An error occurred. Error: {error}</>
-    if (isLoading || !data) return <Skeleton/>
-    const masterBlockIds = [];
-    const lastBlockHeight = 0; // data.lastBlockHeight; // TODO: implement
-    for (let i = lastBlockHeight; i > Math.max(lastBlockHeight - LIMIT, 0); i--) {
-        masterBlockIds.push(i);
-    }
-
-    async function renderRow( blockHeight: number ) {
-        return []
-            // TODO: fix this statement: const blockData = await sdk.blockchain.blockchainQuery.getBlockInfoObject(blockHeight);
-        /*
-        return [
-            <td key={0}>{blockHeight}</td>,
-            <td key={1}>{blockData.isAnchored() ? "Anchored" : "Running"}</td>,
-            <td key={2}>{blockData.getSize()}</td>,
-            <td key={3}>{blockData.getNumberOfMicroblocks()}</td>,
-            <td key={4}>{blockData.getProposerNode()}</td>,
-            <td key={5}>{blockData.getProposedAt().toLocaleString()}</td>,
-        ]
-
-         */
-    }
-
-    return <LatestBlocksDisplay>
-        <DynamicTableComponent
-            key={lastBlockHeight}
-            header={["Block", "Status", "Size", "#Sections", "Proposer", "Proposed at"]}
-            data={masterBlockIds}
-            renderRow={renderRow}
-            onRowClicked={(h) => {router.push(`/explorer/masterblock/${h}`)}}
-        />
-    </LatestBlocksDisplay>
+    if (lastBlockHeight.isNone()) return <>Loading...</>
+    const lastHeight = lastBlockHeight.unwrap();
+    const heights = [lastHeight, lastHeight-1];
+    return <Table>
+        <TableHead>
+            <TableCell>Height</TableCell>
+        </TableHead>
+        <TableBody>
+            {
+                heights.map((height, index) => (
+                    <TableRow key={height}>
+                        <TableCell>{height}</TableCell>
+                        <TableCell>{height}</TableCell>
+                    </TableRow>
+                ))
+            }
+        </TableBody>
+    </Table>
 }
 
-function LatestBlocksDisplay({children}: PropsWithChildren) {
-    return <>{children}</>
+function BlockRow( blockHeight: number ) {
+
 }
+
 

@@ -31,12 +31,15 @@
     "react-toastify": "^11.0.5",
     "react-use": "^17.6.0",
     "swiper": "^11.1.15",
-    "swr": "^2.3.2"
+    "swr": "^2.3.2",
+    "ws": "^8.18.3",
+    "zod": "^4.0.13"
   },
   "devDependencies": {
     "@types/node": "^20",
     "@types/react": "^18",
     "@types/react-dom": "^18",
+    "@types/ws": "^8.18.1",
     "eslint": "^8",
     "eslint-config-next": "15.0.3",
     "postcss": "^8",

@@ -7,18 +7,10 @@ import {useAtomValue} from "jotai/index";
 import {networkAtom} from "@/atoms/network.atom";
 import useSWR from "swr";
 import {PageTitle} from "@/app/components/pagetitle";
-import {useExplorer} from "@/app/layout";
+import {useBlockchain, useExplorer} from "@/app/layout";
+import {useAsync} from "react-use";
 
-const fetcher = async () =>  {
-    const explorer = useExplorer();
-    const nodes = await explorer.getValidatorNodes();
-    return nodes;
-    /*
-    const nodes : string[] = await sdk.blockchain.blockchainQuery.getValidatorNodes();
-    return nodes;
 
-     */
-}
 
 
 export default function ValidatorNodes() {
@@ -29,11 +21,11 @@ export default function ValidatorNodes() {
         ]
     }
 
-    const network = useAtomValue(networkAtom);
-
-    const {data,error,isLoading} = useSWR(
-        ['getValidators'], fetcher
-    );
+    const blockchain = useBlockchain();
+    const { value: data, loading, error } = useAsync(async () => {
+        const nodes = blockchain.getAllValidatorNodes();
+        return nodes;
+    })
 
     if (!data) return <Skeleton/>
     return (

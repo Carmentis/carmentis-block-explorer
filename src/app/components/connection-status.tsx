@@ -5,63 +5,36 @@ import {Blockchain, ProviderFactory} from "@cmts-dev/carmentis-sdk/client";
 import {useAtomValue} from 'jotai';
 import {networkAtom} from "@/atoms/network.atom";
 import {Tooltip} from "@mui/material";
+import {useBlockchain} from "@/app/layout";
+import {useAsync} from "react-use";
 
 export function NodeConnectionStatus() {
-    const [isConnected, setIsConnected] = useState<boolean | null>(null);
-    const [showTooltip, setShowTooltip] = useState(false);
     const network = useAtomValue(networkAtom);
+    const blockchain = useBlockchain();
+    const {value: status, loading, error} = useAsync(async () => {
+        return await blockchain.getNodeStatus()
+    }, [network]);
 
-    useEffect(() => {
-        let isMounted = true;
-
-        const checkConnection = async () => {
-            try {
-                // Try to get chain status as a simple ping
-                const blockchain = Blockchain.createFromProvider(
-                    ProviderFactory.createInMemoryProviderWithExternalProvider(network)
-                );
-                const explorer = blockchain.getExplorer(); // TODO check node is alive
-                //await explorer.getChainStatus();
-                if (isMounted) setIsConnected(true);
-            } catch (error) {
-                if (isMounted) setIsConnected(false);
-            }
-        };
-
-        // Check connection immediately
-        checkConnection();
-
-        // Set up interval to check connection periodically
-        const interval = setInterval(checkConnection, 10000); // Check every 10 seconds
-
-        return () => {
-            isMounted = false;
-            clearInterval(interval);
-        };
-    }, [network]); // Re-run when network changes
 
     return (
         <div className="flex items-center">
             <Tooltip title={network}>
                 <div className="flex items-center">
-                <span className="text-sm mr-2">Node Status:</span>
                 <div 
                     className="relative flex items-center"
-                    onMouseEnter={() => setShowTooltip(true)}
-                    onMouseLeave={() => setShowTooltip(false)}
                 >
                     <div className={`w-3 h-3 rounded-full ${
-                        isConnected === null 
+                        loading
                             ? 'bg-gray-400' // Loading state
-                            : isConnected 
+                            : status 
                                 ? 'bg-green-500' // Connected
                                 : 'bg-red-500'   // Disconnected
                     }`}></div>
                     <span className="ml-2 text-sm">
-                        {isConnected === null 
+                        {loading
                             ? 'Checking...' 
-                            : isConnected 
-                                ? 'Connected' 
+                            : status
+                                ? `Connected to ${status.getChainId()}`
                                 : 'Disconnected'}
                     </span>
 

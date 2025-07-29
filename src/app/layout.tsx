@@ -26,7 +26,6 @@ const SWR_CONFIG = {
     fetcher: (url: string) => axios.get(url).then(res => res.data)
 }
 
-
 export function useBlockchain() {
     // const node = process.env.NEXT_PUBLIC_NODE_URL;
     const node = useAtomValue(networkAtom);
