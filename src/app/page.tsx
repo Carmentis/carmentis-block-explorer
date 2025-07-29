@@ -9,8 +9,9 @@ import {useRouter} from "next/navigation";
 import {useBlockchain, useExplorer} from './layout';
 import {useNodeUrl} from "@/hooks/useNodeUrl";
 import {useWebsocketNodeUrl} from "@/hooks/useWebsocketNodeUrl";
-import {BlockchainFacade, Optional} from "@cmts-dev/carmentis-sdk/client";
+import {BlockchainFacade, NewBlockEventType, Optional} from "@cmts-dev/carmentis-sdk/client";
 import {Table, TableBody, TableCell, TableHead, TableRow} from "@mui/material";
+import Paper from "@mui/material/Paper";
 
 
 async function loadCurrentHeight() {
@@ -35,33 +36,32 @@ export default function Home() {
 const LIMIT = 10;
 function LatestBlocks() {
     const wsUrl = useWebsocketNodeUrl();
-    const [lastBlockHeight, setLastBlockHeight] = useState<Optional<number>>(Optional.none());
+    const [lastBlock, setLastBlock] = useState<Optional<NewBlockEventType>>(Optional.none());
 
     useEffect(() => {
         const client = BlockchainFacade.createWebSocketForNode(wsUrl);
         client.addCallback({
-            onNewBlock: (event) => {
-                const header = event.result.data.value.block.header;
-                const chainId = header.chain_id;
-                const height = Number.parseInt(header.height);
-                setLastBlockHeight(Optional.some(height));
+            onNewBlock: (event: NewBlockEventType) => {
+                setLastBlock(Optional.some(event));
             }
         })
     }, [wsUrl]);
 
-    if (lastBlockHeight.isNone()) return <>Loading...</>
-    const lastHeight = lastBlockHeight.unwrap();
-    const heights = [lastHeight, lastHeight-1];
-    return <Table>
+    if (lastBlock.isNone()) return <>Loading...</>
+    const block = lastBlock.unwrap();
+    const lastHeight = Number.parseInt(block.result.data.value.block.header.height);
+    const lastBlockProposer  = block.result.data.value.block.header.proposer_address;
+    const heights = [{h: lastHeight, p:lastBlockProposer}, {h:lastHeight-1, p: ""}];
+    return <Table component={Paper}>
         <TableHead>
             <TableCell>Height</TableCell>
         </TableHead>
         <TableBody>
             {
-                heights.map((height, index) => (
-                    <TableRow key={height}>
-                        <TableCell>{height}</TableCell>
-                        <TableCell>{height}</TableCell>
+                heights.map((block, index) => (
+                    <TableRow key={block.h}>
+                        <TableCell>{block.h}</TableCell>
+                        <TableCell>{block.p}</TableCell>
                     </TableRow>
                 ))
             }

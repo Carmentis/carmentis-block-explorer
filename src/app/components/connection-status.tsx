@@ -7,6 +7,13 @@ import {networkAtom} from "@/atoms/network.atom";
 import {Tooltip} from "@mui/material";
 import {useBlockchain} from "@/app/layout";
 import {useAsync} from "react-use";
+import Table from '@mui/material/Table';
+import TableBody from '@mui/material/TableBody';
+import TableCell from '@mui/material/TableCell';
+import TableContainer from '@mui/material/TableContainer';
+import TableHead from '@mui/material/TableHead';
+import TableRow from '@mui/material/TableRow';
+import Paper from '@mui/material/Paper';
 
 export function NodeConnectionStatus() {
     const network = useAtomValue(networkAtom);
@@ -16,9 +23,48 @@ export function NodeConnectionStatus() {
     }, [network]);
 
 
+    // Create a tooltip content component for connected state
+    const ConnectedTooltip = () => {
+        if (!status) return null;
+
+        return (
+            <TableContainer component={Paper} sx={{ minWidth: 300 }}>
+                <Table size="small">
+                    <TableHead>
+                        <TableRow>
+                            <TableCell>Property</TableCell>
+                            <TableCell>Value</TableCell>
+                        </TableRow>
+                    </TableHead>
+                    <TableBody>
+                        <TableRow>
+                            <TableCell>Chain ID</TableCell>
+                            <TableCell>{status.getChainId()}</TableCell>
+                        </TableRow>
+                        <TableRow>
+                            <TableCell>Node Public Key</TableCell>
+                            <TableCell>{status.getCometBFTNodePublicKey() || 'N/A'}</TableCell>
+                        </TableRow>
+                        <TableRow>
+                            <TableCell>Public Key Type</TableCell>
+                            <TableCell>{status.getCometBFTNodePublicKeyType() || 'N/A'}</TableCell>
+                        </TableRow>
+                        <TableRow>
+                            <TableCell>Node Name</TableCell>
+                            <TableCell>{status.getNodeName() || 'N/A'}</TableCell>
+                        </TableRow>
+                    </TableBody>
+                </Table>
+            </TableContainer>
+        );
+    };
+
     return (
         <div className="flex items-center">
-            <Tooltip title={network}>
+            <Tooltip 
+                title={status ? <ConnectedTooltip /> : network}
+                placement="bottom-start"
+            >
                 <div className="flex items-center">
                 <div 
                     className="relative flex items-center"
@@ -37,8 +83,6 @@ export function NodeConnectionStatus() {
                                 ? `Connected to ${status.getChainId()}`
                                 : 'Disconnected'}
                     </span>
-
-
                 </div>
             </div>
             </Tooltip>

@@ -2,7 +2,7 @@
 
 import {Hash} from "@cmts-dev/carmentis-sdk/client";
 import Skeleton from "react-loading-skeleton";
-import TableComponent from "@/components/table.component";
+import TableComponent, {DynamicTableComponent} from "@/components/table.component";
 import {useAtomValue} from "jotai/index";
 import {networkAtom} from "@/atoms/network.atom";
 import useSWR from "swr";
@@ -14,26 +14,40 @@ import {useAsync} from "react-use";
 
 
 export default function ValidatorNodes() {
-    const accountExtractor = (data:Hash) => {
 
-        return [
-            { head: "Hash", value: <>{data.encode()}</> },
-        ]
-    }
 
     const blockchain = useBlockchain();
     const { value: data, loading, error } = useAsync(async () => {
-        const nodes = blockchain.getAllValidatorNodes();
+        const nodes = await blockchain.getAllValidatorNodes();
         return nodes;
     })
 
-    if (!data) return <Skeleton/>
+    const renderRow = async (hash:Hash) => {
+        const validator = await blockchain.loadValidatorNode(hash);
+        const organizationId = validator.getOrganizationId();
+        const organization = await  blockchain.loadOrganization(organizationId);
+        const accountHash = await blockchain.getAccountHashFromPublicKey(organization.getPublicKey());
+        const balance = await blockchain.getAccountBalance(accountHash);
+        return [
+            <>{hash.encode()}</>,
+            <>{validator.getOrganizationId().encode()}</>,
+            <>{validator.getPower()}</>,
+            <>{validator.getCometPublicKey()}</>,
+            <>{balance.toString()}</>,
+        ]
+    }
+
+    if (loading) return <Skeleton/>
+    if (error || !data) return <>An error occurred: {error?.message}</>
+    const header = ["Hash", 'Organisation ID', "Voting power", "Public key", "Balance"]
     return (
         <>
             <PageTitle title="Validator Nodes" />
-            <TableComponent
+            <DynamicTableComponent
+                header={header}
                 data={data}
-                extractor={accountExtractor}/>
+                renderRow={renderRow}
+            />
         </>
     )
     /*

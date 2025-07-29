@@ -17,7 +17,7 @@ export default function OrganisationsPage() {
     const blockchain = useBlockchain();
 
     const {value: data, loading, error} = useAsync(async () => {
-        return await blockchain.getAllOrganisations();
+        return await blockchain.getAllOrganizations();
     })
 
     const header = ["Name",  "Hash", "Location", "Website", "Public Key", "Balance"]
@@ -43,7 +43,8 @@ export default function OrganisationsPage() {
     }
 
 
-    if (!data) return <Skeleton/>
+    if (loading) return <Skeleton/>
+    if (!data || error) return <>An error occurred: {error?.message}</>
     return (
         <>
             <PageTitle title="Organisations" />
