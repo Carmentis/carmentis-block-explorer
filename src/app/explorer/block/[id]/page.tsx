@@ -5,7 +5,7 @@ import {useParams, useRouter} from "next/navigation";
 import useSWR from "swr";
 import {useAtomValue} from "jotai";
 import {networkAtom} from "@/atoms/network.atom";
-import {BlockchainQuery, BlockchainQueryFabric} from "@cmts-dev/carmentis-sdk/client";
+import {BlockchainFacade} from "@cmts-dev/carmentis-sdk/client";
 import TableMicroBlocks from "@/app/components/table-micro-blocks";
 
 export default function MasterBlockExplorer() {
@@ -20,13 +20,16 @@ export default function MasterBlockExplorer() {
     );
 }
 
-async function loadBlock([, client, h]: [string, BlockchainQuery, number]) {
-    return await client.getMasterBlock(h);
+async function loadBlock([, client, h]: [string, BlockchainFacade, number]) {
+    const info = await client.getBlockInformation(h);
+    const content = await client.getBlockContent(h);
+    return {info, content}
+
 }
 
 function MasterBlock({ id }: { id: number }) {
     const network = useAtomValue(networkAtom);
-    const client = BlockchainQueryFabric.build(network);
+    const client = BlockchainFacade.createFromNodeUrl(network);
     const router = useRouter();
     const { data, isLoading, error } = useSWR(["getCurrentHeight", client, id], loadBlock);
 
@@ -54,6 +57,7 @@ function MasterBlock({ id }: { id: number }) {
         );
     }
 
+    const {info, content} = data;
     return (
         <div className="space-y-6">
             {/* Block Information Card */}
@@ -64,33 +68,25 @@ function MasterBlock({ id }: { id: number }) {
                         <div className="space-y-3">
                             <div>
                                 <p className="text-sm text-gray-500">Height</p>
-                                <p className="font-medium">{data.getHeight()}</p>
-                            </div>
-                            <div>
-                                <p className="text-sm text-gray-500">Status</p>
-                                <p>
-                                    <span className={`px-2 py-1 rounded-full text-xs font-medium ${data.isAnchored() ? 'bg-green-100 text-green-800' : 'bg-yellow-100 text-yellow-800'}`}>
-                                        {data.isAnchored() ? "Anchored" : "Running"}
-                                    </span>
-                                </p>
+                                <p className="font-medium">{id}</p>
                             </div>
                             <div>
                                 <p className="text-sm text-gray-500">Size</p>
-                                <p className="font-medium">{data.getSize()} bytes</p>
+                                <p className="font-medium">--</p>
                             </div>
                         </div>
                         <div className="space-y-3">
                             <div>
                                 <p className="text-sm text-gray-500">Proposer</p>
-                                <p className="font-medium">{data.getProposerNode()}</p>
+                                <p className="font-medium">{info.getProposerNode().encode()}</p>
                             </div>
                             <div>
                                 <p className="text-sm text-gray-500">Proposed At</p>
-                                <p className="font-medium">{data.getProposedAt().toLocaleString()}</p>
+                                <p className="font-medium">{info.anchoredAt().toLocaleString()}</p>
                             </div>
                             <div>
                                 <p className="text-sm text-gray-500">Number of Microblocks</p>
-                                <p className="font-medium">{data.getMicroBlocksHash().length}</p>
+                                <p className="font-medium">{content.numberOfContainedMicroBlocks()}</p>
                             </div>
                         </div>
                     </div>
@@ -102,9 +98,9 @@ function MasterBlock({ id }: { id: number }) {
                 <div className="p-6">
                     <h2 className="text-xl font-semibold text-gray-800 mb-4">Microblocks</h2>
                     <p className="text-gray-600 mb-6">
-                        This master block contains the following microblocks. Click on a microblock to view its details.
+                        This block contains the following microblocks. Click on a microblock to view its details.
                     </p>
-                    <TableMicroBlocks hashes={data.getMicroBlocksHash()} />
+                    <TableMicroBlocks hashes={content.getContainedMicroBlockHashes()} />
                 </div>
             </div>
 
@@ -112,7 +108,7 @@ function MasterBlock({ id }: { id: number }) {
             <div className="flex flex-col sm:flex-row gap-3 justify-between">
                 {id > 1 && (
                     <button 
-                        onClick={() => router.push(`/explorer/masterblock/${id - 1}`)}
+                        onClick={() => router.push(`/explorer/block/${id - 1}`)}
                         className="px-4 py-2 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 transition-colors flex items-center justify-center"
                     >
                         <svg className="w-5 h-5 mr-2" fill="currentColor" viewBox="0 0 20 20">
@@ -122,7 +118,7 @@ function MasterBlock({ id }: { id: number }) {
                     </button>
                 )}
                 <button 
-                    onClick={() => router.push(`/explorer/masterblock/${id + 1}`)}
+                    onClick={() => router.push(`/explorer/block/${id + 1}`)}
                     className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors flex items-center justify-center"
                 >
                     Next Block

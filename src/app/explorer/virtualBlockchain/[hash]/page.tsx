@@ -2,6 +2,7 @@
 
 import {useParams, useRouter} from "next/navigation";
 import {
+    BlockchainFacade,
     Hash,
     VB_ACCOUNT,
     VB_APP_LEDGER,
@@ -13,33 +14,21 @@ import useSWR from "swr";
 import {PageTitle} from "@/app/components/pagetitle";
 import TableMicroBlocks from "@/app/components/table-micro-blocks";
 import {useBlockchain, useExplorer} from "@/app/layout";
+import { useAsync } from "react-use";
+import { useAtomValue } from "jotai";
+import { networkAtom } from "@/atoms/network.atom";
 
-const fetcher = async (input: string[]) => {
-    console.assert(Array.isArray(input) && input.length === 2);
-    console.assert(typeof input[1] === "string");
-    const hash = Hash.from(input[1]);
-    const explorer = useExplorer();
-    const blockchain = useBlockchain();
-    const info = await explorer.getVirtualBlockchainState(hash);
-    const content = await explorer.getVirtualBlockchainHashes(
-        Hash.from(info.lastMicroblockHash)
-    );
-    /*
-    const info = await sdk.blockchain.blockchainQuery.getVirtualBlockchainInfo(hash);
-    const content = await sdk.blockchain.blockchainQuery.getVirtualBlockchainContent(hash);
-
-
-     */
-
-    return { info, content };
-}
 
 export default function Page() {
+    const network = useAtomValue(networkAtom);
+    const blockchain = BlockchainFacade.createFromNodeUrl(network);
     const params = useParams<{ hash: string }>();
-    const hash = params.hash;
+    const hash = Hash.from(params.hash);
     const router = useRouter();
 
-    const { data, isLoading, error } = useSWR(["getAppLedger", hash], fetcher);
+    const { value: data, loading: isLoading, error } = useAsync(async () => {
+        return await blockchain.getVirtualBlockchain(hash);
+    })
 
     if (isLoading) {
         return (
@@ -55,6 +44,7 @@ export default function Page() {
     }
 
     if (error || !data) {
+        console.error(error)
         return (
             <>
                 <PageTitle title="Virtual Blockchain" />
@@ -71,32 +61,22 @@ export default function Page() {
         );
     }
 
-    const height = data.info.height;
-    const type = data.info.type;
+
+    const virtualBlockchainState = data.getVirtualBlockchainState();
+    const lastMicroBlockHash = virtualBlockchainState.getLastMicroblockHash().encode()
+    const height = virtualBlockchainState.getHeight();
+    const microBlockHashes = data.getMicroBlockHashes();
 
     // Get the type label based on the type constant
     const getTypeLabel = () => {
-        switch (type) {
-            case VB_APP_LEDGER: return "App Ledger";
-            case VB_ACCOUNT: return "Account";
-            case VB_APPLICATION: return "Application";
-            case VB_ORGANIZATION: return "Organisation";
-            case VB_VALIDATOR_NODE: return "Validator Node";
-            default: return "Unknown";
-        }
+        if (virtualBlockchainState.isAccountVirtualBlockchain()) return 'Account Virtual Blockchain';
+        if (virtualBlockchainState.isNodeVirtualBlockchain()) return 'Node Virtual Blockchain';
+        if (virtualBlockchainState.isOrganizationVirtualBlockchain()) return 'Organization Virtual Blockchain';
+        if (virtualBlockchainState.isApplicationVirtualBlockchain()) return 'Application Virtual Blockchain';
+        if (virtualBlockchainState.isApplicationLedgerVirtualBlockchain()) return 'Ledger Virtual Blockchain';
+        return 'Unknown';
     };
 
-    // Get the type color based on the type constant
-    const getTypeColor = () => {
-        switch (type) {
-            case VB_APP_LEDGER: return "bg-blue-100 text-blue-800";
-            case VB_ACCOUNT: return "bg-green-100 text-green-800";
-            case VB_APPLICATION: return "bg-indigo-100 text-indigo-800";
-            case VB_ORGANIZATION: return "bg-pink-100 text-pink-800";
-            case VB_VALIDATOR_NODE: return "bg-red-100 text-red-800";
-            default: return "bg-gray-100 text-gray-800";
-        }
-    };
 
     return (
         <>
@@ -108,7 +88,7 @@ export default function Page() {
                     <div className="p-6">
                         <div className="flex flex-col sm:flex-row sm:items-center justify-between mb-6">
                             <h2 className="text-xl font-semibold text-gray-800">Virtual Blockchain Details</h2>
-                            <span className={`mt-2 sm:mt-0 px-3 py-1 rounded-full text-xs font-medium ${getTypeColor()}`}>
+                            <span className={`mt-2 sm:mt-0 px-3 py-1 rounded-full text-xs font-medium`}>
                                 {getTypeLabel()}
                             </span>
                         </div>
@@ -116,8 +96,8 @@ export default function Page() {
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                             <div className="space-y-4">
                                 <div>
-                                    <p className="text-sm text-gray-500">Hash</p>
-                                    <p className="font-mono text-sm break-all">{hash}</p>
+                                    <p className="text-sm text-gray-500">Id</p>
+                                    <p className="font-mono text-sm break-all">{hash.encode()}</p>
                                 </div>
                                 <div>
                                     <p className="text-sm text-gray-500">Height</p>
@@ -131,7 +111,7 @@ export default function Page() {
                                 </div>
                                 <div>
                                     <p className="text-sm text-gray-500">Number of Microblocks</p>
-                                    <p className="font-medium">{data.info.height}</p>
+                                    <p className="font-medium">{height}</p>
                                 </div>
                             </div>
                         </div>
@@ -145,7 +125,7 @@ export default function Page() {
                         <p className="text-gray-600 mb-6">
                             This virtual blockchain contains the following microblocks. Click on a microblock to view its details.
                         </p>
-                        <TableMicroBlocks hashes={data.content} />
+                        <TableMicroBlocks hashes={microBlockHashes} />
                     </div>
                 </div>
 

@@ -1,32 +1,27 @@
 'use client'
 
 import {useParams, useRouter} from "next/navigation";
-import {Hash, Microblock} from "@cmts-dev/carmentis-sdk/client";
+import {BlockchainFacade, Hash, Microblock, MicroBlockInformation, MicroBlockWrapper} from "@cmts-dev/carmentis-sdk/client";
 import useSWR from "swr";
 import {useAtomValue} from "jotai/index";
 import {networkAtom} from "@/atoms/network.atom";
 import Link from "next/link";
 import {PageTitle} from "@/app/components/pagetitle";
 import {useExplorer} from "@/app/layout";
+import {useAsync} from "react-use";
 
-const fetcher = async (input: string[]) => {
-    console.assert(Array.isArray(input) && input.length === 2);
-    console.assert(typeof input[1] === "string");
-    const hash = Hash.from(input[1]);
-    const blockchain = useExplorer();
-    const mb = await blockchain.getMicroBlock(hash);
-    return mb;
-}
+
 
 export default function MicroBlockExplorer() {
     const network = useAtomValue(networkAtom);
+    const blockchain = BlockchainFacade.createFromNodeUrl(network);
 
     // load the params
     const params = useParams<{ hash: string }>();
-    const hash = params.hash;
-    const { data, isLoading, error } = useSWR<Microblock>(
-        ["getMicroblock", hash], fetcher
-    );
+    const hash = Hash.from(params.hash);
+    const { value: data, loading: isLoading, error } = useAsync(async () => {
+        return await blockchain.getMicroBlock(hash)
+    })
 
     if (error) {
         return (
@@ -59,17 +54,20 @@ export default function MicroBlockExplorer() {
 
     return (
         <>
-            <PageTitle title={`Microblock ${hash.substring(0, 10)}...`} />
-            <DataDisplay data={data} />
+            <PageTitle title={`Microblock`} />
+            <DataDisplay info={data} />
         </>
     );
 }
 
-const DataDisplay = ({ data }: { data: Microblock }) => {
+const DataDisplay = ({ info }: { info: MicroBlockWrapper }) => {
     const router = useRouter();
-    // compute the previous hash link
-    const height = data.getHeight();
-    const previousHash = data.getPreviousHash();
+    const height = info.getHeight();
+    const gas = info.getGas().toString();
+    const gasPrice = info.getGasPrice().toString();
+    const previousHash = info.getPreviousHash();
+    const vbId = info.getVirtualBlockchainId().encode();
+    const accountId = info.getFeesPayerAccount();
 
     return (
         <div className="space-y-6">
@@ -81,11 +79,20 @@ const DataDisplay = ({ data }: { data: Microblock }) => {
                         <div className="space-y-4">
                             <div>
                                 <p className="text-sm text-gray-500">Hash</p>
-                                <p className="font-mono text-sm break-all"></p>
+                                <p className="font-mono text-sm break-all">{info.getMicroBlockHash().encode()}</p>
                             </div>
                             <div>
                                 <p className="text-sm text-gray-500">Height</p>
                                 <p className="font-medium">{height}</p>
+                            </div>
+                            <div>
+                                <p className="text-sm text-gray-500">Virtual blockchain</p>
+                                <Link
+                                    href={`/explorer/virtualBlockchain/${vbId}`}
+                                    className="font-mono text-sm text-blue-600 hover:text-blue-800 break-all"
+                                >
+                                    {vbId}
+                                </Link>
                             </div>
                             <div>
                                 <p className="text-sm text-gray-500">Previous Hash</p>
@@ -104,15 +111,29 @@ const DataDisplay = ({ data }: { data: Microblock }) => {
                         <div className="space-y-4">
                             <div>
                                 <p className="text-sm text-gray-500">Timestamp</p>
-                                <p className="font-medium">{new Date(data.getTimestamp()).toLocaleString()}</p>
+                                <p className="font-medium">{info.getTimestamp().toLocaleString()}</p>
                             </div>
                             <div>
                                 <p className="text-sm text-gray-500">Gas</p>
-                                <p className="font-medium">{data.getGas()}</p>
+                                <p className="font-medium">{gas}</p>
                             </div>
                             <div>
                                 <p className="text-sm text-gray-500">Gas Price</p>
-                                <p className="font-medium">{data.getGasPrice()}</p>
+                                <p className="font-medium">{gasPrice}</p>
+                            </div>
+                            <div>
+                                <p className="text-sm text-gray-500">Fees payer account</p>
+                                {
+                                    accountId.isNone() ?
+                                        <p className="font-medium">--</p>
+                                        :
+                                        <Link
+                                            href={`/account/${accountId.unwrap().encode()}`}
+                                            className="font-mono text-sm text-blue-600 hover:text-blue-800 break-all"
+                                        >
+                                            {accountId.unwrap().encode()}
+                                        </Link>
+                                }
                             </div>
                         </div>
                     </div>
@@ -124,8 +145,7 @@ const DataDisplay = ({ data }: { data: Microblock }) => {
                 <div className="p-6">
                     <h2 className="text-xl font-semibold text-gray-800 mb-4">Sections</h2>
                     <p className="text-gray-600 mb-6">
-                        Sections represent parts of a microblock. Each section is the most atomic unit of a microblock,
-                        containing a name and a value.
+                        Sections represent parts of a microblock. Each section is the most atomic unit of a microblock.
                     </p>
 
                     <div className="overflow-x-auto">
@@ -138,13 +158,13 @@ const DataDisplay = ({ data }: { data: Microblock }) => {
                                 </tr>
                             </thead>
                             <tbody className="bg-white divide-y divide-gray-200">
-                                {data.getAllSections().map((section) => (
-                                    <tr key={section.type} className="hover:bg-blue-50">
-                                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-700">{section.type}</td>
-                                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-700">{section.type}</td>
-                                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-700">{section.data.length} bytes</td>
-                                    </tr>
-                                ))}
+                            {info.getAllSections().map((section) => (
+                                <tr key={section.type} className="hover:bg-blue-50">
+                                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-700">{section.type}</td>
+                                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-700">{section.type}</td>
+                                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-700">{section.data.length} bytes</td>
+                                </tr>
+                            ))}
                             </tbody>
                         </table>
                     </div>
@@ -155,7 +175,7 @@ const DataDisplay = ({ data }: { data: Microblock }) => {
             <div className="flex flex-col sm:flex-row gap-3 justify-between">
                 {height > 1 && (
                     <button 
-                        onClick={() => router.push(`/explorer/microblock/${previousHash}`)}
+                        onClick={() => router.push(`/explorer/microblock/${previousHash.encode()}`)}
                         className="px-4 py-2 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 transition-colors flex items-center justify-center"
                     >
                         <svg className="w-5 h-5 mr-2" fill="currentColor" viewBox="0 0 20 20">
@@ -164,13 +184,17 @@ const DataDisplay = ({ data }: { data: Microblock }) => {
                         Previous Microblock
                     </button>
                 )}
-                <button 
-                    onClick={() => router.back()}
-                    className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors flex items-center justify-center"
-                >
-                    Back to Block
-                </button>
             </div>
         </div>
     );
 };
+
+/*
+{data.getAllSections().map((section) => (
+                                    <tr key={section.type} className="hover:bg-blue-50">
+                                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-700">{section.type}</td>
+                                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-700">{section.type}</td>
+                                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-700">{section.data.length} bytes</td>
+                                    </tr>
+                                ))}
+ */
