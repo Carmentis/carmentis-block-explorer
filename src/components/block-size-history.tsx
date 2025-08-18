@@ -4,6 +4,9 @@ import {useAtomValue} from "jotai";
 import {networkAtom} from "@/atoms/network.atom";
 import {BlockchainFacade} from "@cmts-dev/carmentis-sdk/client";
 import useLatestBlockHeight from "@/hooks/useLatestBlockHeight";
+import { useRouter } from "next/navigation";
+import { routes } from "@/app/routes";
+import { useTheme } from "@mui/material/styles";
 
 type MicroblocksPerHeight = { height: number; microblocks: number };
 
@@ -13,6 +16,8 @@ const ACCOUNTED_BLOCKS_NUMBER = 100;
 export default function BlockSizeHistory() {
     const endpoint = useAtomValue(networkAtom);
     const { lastBlockHeight, loading } = useLatestBlockHeight();
+    const theme = useTheme();
+    const router = useRouter();
 
     const client = useMemo(
         () => (endpoint ? BlockchainFacade.createFromNodeUrl(endpoint) : null),
@@ -79,7 +84,7 @@ export default function BlockSizeHistory() {
             try {
                 const content = await client.getBlockContent(h);
                 return { height: h, microblocks: content.numberOfContainedMicroBlocks() };
-            } catch (e: any) {
+            } catch (e: unknown) {
                 console.error("Error loading block", h, e);
                 setError("Error loading history.");
                 return null;
@@ -151,17 +156,27 @@ export default function BlockSizeHistory() {
                     {
                         scaleType: "band",
                         data: xData,
-                        label: "Block",
+                        label: "Bloc",
                     },
                 ]}
                 series={[
                     {
                         data: yData,
-                        label: "Contained microblocks number",
+                        label: "Micro-blocs",
+                        color: theme.palette.secondary.main,
+                        valueFormatter: (v) => (v == null ? 'Chargement…' : `${v} micro-bloc${v === 1 ? '' : 's'}`),
                     },
                 ]}
-                height={300}
+                height={320}
                 grid={{ vertical: true, horizontal: true }}
+                borderRadius={6}
+                onItemClick={(_, item) => {
+                    const height = xData[item.dataIndex];
+                    router.push(routes.explorer.block(height));
+                }}
+                slotProps={{
+                    bar: { style: { cursor: 'pointer', filter: 'drop-shadow(0 1px 2px rgba(0,0,0,0.15))' } },
+                }}
             />
             {fetching && (
                 <div
