@@ -137,6 +137,7 @@ function DynamicRow<T>({numberOfCols, row, index, renderRow, noWrap}: {
     }, [row, index, renderRow]);
 
     if (error) {
+        console.error(error);
         return (
             <td colSpan={numberOfCols} className="w-full h-full text-center">
                 <div className="bg-red-50 p-4 w-full flex flex-col md:flex-row items-center justify-center text-red-600 transition-all duration-300 hover:bg-red-100 shadow-sm mx-auto ">

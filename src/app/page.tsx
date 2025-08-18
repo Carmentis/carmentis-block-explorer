@@ -1,17 +1,18 @@
 'use client';
 
-import {PropsWithChildren, useEffect, useState} from 'react';
+import {useEffect, useState} from 'react';
 import {PageTitle} from '@/app/components/pagetitle';
-import useSWR from "swr";
-import Skeleton from "react-loading-skeleton";
-import {DynamicTableComponent} from "@/components/table.component";
-import {useRouter} from "next/navigation";
-import {useBlockchain, useExplorer} from './layout';
-import {useNodeUrl} from "@/hooks/useNodeUrl";
+import {useExplorer} from './layout';
 import {useWebsocketNodeUrl} from "@/hooks/useWebsocketNodeUrl";
 import {BlockchainFacade, NewBlockEventType, Optional} from "@cmts-dev/carmentis-sdk/client";
-import {Table, TableBody, TableCell, TableHead, TableRow} from "@mui/material";
+import {Card, Grid2 as Grid, Table, TableBody, TableCell, TableHead, TableRow, Typography} from "@mui/material";
 import Paper from "@mui/material/Paper";
+import BlockSizeHistory from "@/components/block-size-history";
+import useLatestBlockHeight from "@/hooks/useLatestBlockHeight";
+import {useAsync} from "react-use";
+import { useAtomValue } from 'jotai';
+import { networkAtom } from '@/atoms/network.atom';
+import { useRouter } from 'next/navigation';
 
 
 async function loadCurrentHeight() {
@@ -26,51 +27,79 @@ export default function Home() {
     return (
         <>
             <PageTitle title={"Dashboard"}></PageTitle>
-            <LatestBlocks/>
+            <Grid container spacing={2}>
+                <Grid size={{ lg: 7, md: 12 }}>
+                    <Card>
+                        <LatestBlocks/>
+                    </Card>
+                </Grid>
+                <Grid size={{ lg: 5, md: 12 }}>
+                    <Card>
+                        <Typography variant="h6">Block size history</Typography>
+                        <BlockSizeHistory/>
+                    </Card>
+                </Grid>
+            </Grid>
         </>
     );
 }
 
 
-
-const LIMIT = 10;
 function LatestBlocks() {
-    const wsUrl = useWebsocketNodeUrl();
-    const [lastBlock, setLastBlock] = useState<Optional<NewBlockEventType>>(Optional.none());
-
-    useEffect(() => {
-        const client = BlockchainFacade.createWebSocketForNode(wsUrl);
-        client.addCallback({
-            onNewBlock: (event: NewBlockEventType) => {
-                setLastBlock(Optional.some(event));
-            }
-        })
-    }, [wsUrl]);
-
+    const limit = 5;
+    const { lastBlockHeight: lastBlock, loading } = useLatestBlockHeight();
     if (lastBlock.isNone()) return <>Loading...</>
-    const block = lastBlock.unwrap();
-    const lastHeight = Number.parseInt(block.result.data.value.block.header.height);
-    const lastBlockProposer  = block.result.data.value.block.header.proposer_address;
-    const heights = [{h: lastHeight, p:lastBlockProposer}, {h:lastHeight-1, p: ""}];
+
+    // compute the entries
+    const entries = [];
+    const lastBlockHeight = lastBlock.unwrap();
+    const start = Math.max(lastBlockHeight - limit, 1);
+    const end = lastBlockHeight;
+    for (let i = end; i >= start; i--) {
+        const component = <RowTable key={i} height={i}/>;
+        entries.push(component);
+    }
     return <Table component={Paper}>
         <TableHead>
             <TableCell>Height</TableCell>
         </TableHead>
         <TableBody>
-            {
-                heights.map((block, index) => (
-                    <TableRow key={block.h}>
-                        <TableCell>{block.h}</TableCell>
-                        <TableCell>{block.p}</TableCell>
-                    </TableRow>
-                ))
-            }
+            <TableRow>
+                <TableCell>{lastBlockHeight + 1}</TableCell>
+                <TableCell>Block hash</TableCell>
+                <TableCell>Anchored at</TableCell>
+                <TableCell>Micro-blocks</TableCell>
+            </TableRow>
+            {entries}
         </TableBody>
     </Table>
 }
 
-function BlockRow( blockHeight: number ) {
 
+function RowTable({height}: {height: number}) {
+    const navigation = useRouter();
+    const network = useAtomValue(networkAtom);
+    const [numberOfMicroblocks, setNumberOfMicroblocks] = useState("--");
+    const [anchoredAt, setAnchoredAt] = useState("--");
+    const [blockHash, setBlockHash] = useState("--");
+    const {loading } = useAsync(async () => {
+        const blockchain = BlockchainFacade.createFromNodeUrl(network);
+        const info = await blockchain.getBlockInformation(height);
+        const content = await blockchain.getBlockContent(height);
+        setAnchoredAt(info.anchoredAt().toLocaleString())
+        setBlockHash(info.getBlockHash().encode());
+        setNumberOfMicroblocks(content.numberOfContainedMicroBlocks().toString());
+    })
+
+    function goToBlock() {
+        navigation.push(`/explorer/block/${height}`);
+    }
+
+    return <TableRow key={height} onClick={goToBlock} sx={{cursor: "pointer"}}>
+        <TableCell>{height}</TableCell>
+        <TableCell>{blockHash}</TableCell>
+        <TableCell>{anchoredAt}</TableCell>
+        <TableCell>{numberOfMicroblocks}</TableCell>
+    </TableRow>
 }
-
 
