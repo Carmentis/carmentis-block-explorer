@@ -156,7 +156,7 @@ export default function BlockSizeHistory() {
                     {
                         scaleType: "band",
                         data: xData,
-                        label: "Bloc",
+                        label: "Block",
                     },
                 ]}
                 series={[
