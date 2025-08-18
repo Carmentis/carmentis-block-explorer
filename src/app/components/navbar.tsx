@@ -16,21 +16,7 @@ function useWindowWidth() {
 export function Navbar() {
     const router = useRouter();
     const [searchQuery, setSearchQuery] = useState('');
-    const [network, setNetwork] = useAtom(networkAtom);
-    const [networkField, setNetworkField] = useState(network);
     const width = useWindowWidth();
-
-    function saveNetwork() {
-        setNetwork(networkField);
-    }
-
-    function OnSubmit(event: React.FormEvent<HTMLFormElement>) {
-        // stop the propagation of the form event
-        event.preventDefault();
-
-        // navigate to search
-        router.push("/search?query=" + searchQuery);
-    }
 
     /**
      * Toggle the sidebar.
@@ -77,26 +63,6 @@ export function Navbar() {
                     className="h-5 w-auto"
                 />
 
-            </div>
-
-            {/* Search Bar (Middle) */}
-            <div className="mx-auto flex-grow max-w-md">
-                <form onSubmit={OnSubmit} className="relative">
-                    <input 
-                        type="text" 
-                        name="query" 
-                        placeholder="Search" 
-                        className="w-full py-1.5 px-4 pr-10 rounded-full border border-gray-300 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent text-sm"
-                        onChange={(e) => setSearchQuery(e.target.value)} 
-                    />
-                    <button 
-                        type="submit" 
-                        title="Search" 
-                        className="absolute right-0 top-0 h-full px-3 text-gray-500 hover:text-gray-700"
-                    >
-                        <i className="bi bi-search"></i>
-                    </button>
-                </form>
             </div>
 
             {/* Connection Status (Right) */}
