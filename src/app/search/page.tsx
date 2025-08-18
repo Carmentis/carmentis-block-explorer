@@ -168,7 +168,7 @@ function DisplaySearchResults(input: { searchQuery: string, results: SearchResul
                                     return <tr key={block.header.nonce}>
 
                                         <td className="col">
-                                            <Link href={"/explorer/masterblock?blockId=" + block.header.nonce}>
+                                            <Link href={"/explorer/block?blockId=" + block.header.nonce}>
                                                 {block.header.nonce}
                                             </Link>
                                         </td>
@@ -260,7 +260,7 @@ function DisplaySearchResults(input: { searchQuery: string, results: SearchResul
                                         </td>
                                         <td className="col">{Formatters.formatTimestampToLocalDate(block.ts)}</td>
                                         <td className="col">
-                                            <Link href={"/explorer/masterblock?blockId=" + block.masterBlock}>
+                                            <Link href={"/explorer/block?blockId=" + block.masterBlock}>
                                                 {block.masterBlock}
                                             </Link>
                                         </td>

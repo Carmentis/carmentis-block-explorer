@@ -11568,7 +11568,7 @@ const constants = {
   // microblock
   MICROBLOCK_SECTION_HEADER_SIZE: SECTION_HEADER_SIZE,
 
-  // masterblock
+  // block
   MASTERBLOCK_CONTENT_HEADER_SIZE: 0
 };
 

@@ -27,19 +27,17 @@ export default function ValidatorNodes() {
         const organizationId = validator.getOrganizationId();
         const organization = await  blockchain.loadOrganization(organizationId);
         const accountHash = await blockchain.getAccountHashFromPublicKey(organization.getPublicKey());
-        const balance = await blockchain.getAccountBalance(accountHash);
         return [
             <>{hash.encode()}</>,
             <>{validator.getOrganizationId().encode()}</>,
-            <>{validator.getPower()}</>,
+            <>{validator.getVotingPower()}</>,
             <>{validator.getCometPublicKey()}</>,
-            <>{balance.toString()}</>,
         ]
     }
 
     if (loading) return <Skeleton/>
     if (error || !data) return <>An error occurred: {error?.message}</>
-    const header = ["Hash", 'Organisation ID', "Voting power", "Public key", "Balance"]
+    const header = ["Hash", 'Organisation ID', "Voting power", "Public key"]
     return (
         <>
             <PageTitle title="Validator Nodes" />

@@ -19,6 +19,8 @@ import {PublicEnvScript} from "next-runtime-env";
 import {useEffect, useState} from 'react';
 import {useAtomValue} from "jotai";
 import {networkAtom} from "@/atoms/network.atom";
+import {createTheme} from "@mui/material";
+import {ThemeProvider} from "@mui/system";
 
 const SWR_CONFIG = {
     refreshInterval: 1000,
@@ -39,12 +41,26 @@ export function useExplorer() {
     return Explorer.createFromProvider(provider);
 }
 
+const theme = createTheme({
+    components: {
+        MuiGrid: {
+            defaultProps: {
+                spacing: 2,
+            },
+        },
+        MuiCard: {
+            defaultProps: {
+                sx: {
+                    p: 2
+                }
+            }
+        }
+    }
+});
+
 export default function RootLayout(
     {children}: Readonly<{ children: React.ReactNode; }>
 ) {
-
-    const explorer = useExplorer();
-
     // State to track if sidebar is open (for mobile)
     const [sidebarOpen, setSidebarOpen] = useState(false);
 
@@ -94,7 +110,7 @@ export default function RootLayout(
     }, [sidebarOpen]);
 
     return (
-
+        <ThemeProvider theme={theme}>
         <html lang="en" className="h-full">
         <body className="bg-gray-50 min-h-screen">
 
@@ -134,5 +150,6 @@ export default function RootLayout(
             </SWRConfig>
             </body>
         </html>
+        </ThemeProvider>
     );
 }
