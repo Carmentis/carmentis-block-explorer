@@ -169,9 +169,15 @@ function ProofCheckerUpload({onUpload}: { onUpload: (proof: any) => void }) {
 function ProofViewer({proof, resetProof}: {resetProof: () => void, proof: Record<string, any>}) {
     const blockchain = useBlockchain();
     const state = useAsync(async () => {
-        const verificationResult = await blockchain.verifyProofFromJson(proof);
-        const records = await verificationResult.getInvolvedBlockHeights().map(blockHeight => verificationResult.getRecordContainedInBlockAtHeight(blockHeight));
-        return {verificationResult, records};
+        const verificationResult = await blockchain.verifyProofFromJson(proof as any);
+        const heights = verificationResult.getInvolvedBlockHeights();
+        const records = await Promise.all(
+            heights.map(async (blockHeight: number) => {
+                const record = await verificationResult.getRecordContainedInBlockAtHeight(blockHeight);
+                return { height: blockHeight, record };
+            })
+        );
+        return { verificationResult, records };
     });
 
     if (state.loading) {

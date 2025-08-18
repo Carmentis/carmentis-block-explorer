@@ -24,7 +24,7 @@ export default function Applications() {
     const header = ["Application ID", "Name",  "Website", "Organisation"]
     const renderRow = async (row : Hash) => {
         const application = await blockchain.loadApplication(row);
-        const orgId = application.getOrganisationId();
+        const orgId = application.getOrganizationId();
         const organisation = await blockchain.loadOrganization(orgId);
         return [
             <>{row.encode()}</>,

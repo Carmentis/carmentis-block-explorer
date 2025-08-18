@@ -16,6 +16,7 @@ import GridViewIcon from "@mui/icons-material/GridView";
 import HubIcon from "@mui/icons-material/Hub";
 import AccountBalanceWalletIcon from "@mui/icons-material/AccountBalanceWallet";
 import { routes } from "@/app/routes";
+import {StringSignatureEncoder} from "@cmts-dev/carmentis-sdk/client";
 
 // A lightweight, minimalist card wrapper to unify loading/error/empty states
 function ResultCard({
@@ -205,21 +206,27 @@ function handleAccountSearchDisplay(search: string) {
         );
     }
 
-    const content = value ? (
-        <Stack spacing={1}>
+
+    let content;
+    if (value) {
+        const encoder = StringSignatureEncoder.defaultStringSignatureEncoder();
+        const publicKey = encoder.encodePublicKey(value.publicKey);
+        content = <Stack spacing={1}>
             <Stack spacing={0.5}>
                 <Typography variant="body2" color="text.secondary">Public key</Typography>
-                <Typography variant="subtitle2" sx={{ wordBreak: 'break-all' }}>{value.publicKey.getPublicKeyAsString()}</Typography>
+                <Typography variant="subtitle2" sx={{ wordBreak: 'break-all' }}>{publicKey}</Typography>
             </Stack>
             <Stack spacing={0.5}>
                 <Typography variant="body2" color="text.secondary">Balance</Typography>
                 <Typography variant="h6">{value.balance.toString()}</Typography>
             </Stack>
-            <Button component={Link} href={routes.accounts.byPublicKey(value.publicKey.getPublicKeyAsString())} variant="contained" size="small">
+            <Button component={Link} href={routes.accounts.byPublicKey(publicKey)} variant="contained" size="small">
                 Open
             </Button>
         </Stack>
-    ) : undefined;
+    } else {
+        content = undefined;
+    }
 
     return (
         <ResultCard

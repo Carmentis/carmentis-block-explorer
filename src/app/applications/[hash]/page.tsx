@@ -5,7 +5,7 @@ import {useParams} from "next/navigation";
 import {
     ApplicationDescription,
     ApplicationWrapper,
-    Hash, OrganisationWrapper,
+    Hash, OrganizationWrapper,
     OrganizationDescription
 } from '@cmts-dev/carmentis-sdk/client';
 import useSWR from "swr";
@@ -41,7 +41,7 @@ export default function Application() {
     const blockchain = useBlockchain();
     const {value: data, loading: isLoading, error} = useAsync(async () => {
         const application = await blockchain.loadApplication(hash);
-        const organisationId = application.getOrganisationId();
+        const organisationId = application.getOrganizationId();
         const organisation = await blockchain.loadOrganization(organisationId);
         return {organisation, application};
     });
@@ -61,7 +61,7 @@ export default function Application() {
 }
 
 
-function ApplicationDescriptionComponent({id, application, organisation}: { id: Hash, application: ApplicationWrapper, organisation: OrganisationWrapper } ) {
+function ApplicationDescriptionComponent({id, application, organisation}: { id: Hash, application: ApplicationWrapper, organisation: OrganizationWrapper } ) {
 
     const items = [
         { label: "Name", value: application.getName() },

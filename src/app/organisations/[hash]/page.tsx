@@ -16,7 +16,7 @@ import useSWR from 'swr';
 import {useParams, useRouter} from "next/navigation";
 import {
     Hash,
-    OrganisationWrapper,
+    OrganizationWrapper,
     OrganizationDescription,
     StringSignatureEncoder
 } from '@cmts-dev/carmentis-sdk/client';
@@ -62,7 +62,7 @@ export default function OrganisationPage() {
 
 
 
-const OrganisationDetail = ({organisation}: {organisation: OrganisationWrapper}) => {
+const OrganisationDetail = ({organisation}: {organisation: OrganizationWrapper}) => {
     const router = useRouter();
     const sigEncoder = StringSignatureEncoder.defaultStringSignatureEncoder();
     return (

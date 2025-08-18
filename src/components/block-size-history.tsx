@@ -162,7 +162,6 @@ export default function BlockSizeHistory() {
                 ]}
                 height={300}
                 grid={{ vertical: true, horizontal: true }}
-                tooltip={{ trigger: "item" }}
             />
             {fetching && (
                 <div

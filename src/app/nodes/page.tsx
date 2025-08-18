@@ -45,6 +45,7 @@ export default function ValidatorNodes() {
                 header={header}
                 data={data}
                 renderRow={renderRow}
+                onRowClicked={() => {}}
             />
         </>
     )
