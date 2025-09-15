@@ -27,9 +27,10 @@ export default function ValidatorNodes() {
         const organizationId = validator.getOrganizationId();
         const organization = await  blockchain.loadOrganization(organizationId);
         const accountHash = await blockchain.getAccountHashFromPublicKey(organization.getPublicKey());
+        const rpcEndpoint = validator.getRpcEndpoint();
         return [
-            <>{hash.encode()}</>,
-            <>{validator.getOrganizationId().encode()}</>,
+            <>{organization.getName()}</>,
+            <>{rpcEndpoint}</>,
             <>{validator.getVotingPower()}</>,
             <>{validator.getCometPublicKey()}</>,
         ]
@@ -37,7 +38,7 @@ export default function ValidatorNodes() {
 
     if (loading) return <Skeleton/>
     if (error || !data) return <>An error occurred: {error?.message}</>
-    const header = ["Hash", 'Organisation ID', "Voting power", "Public key"]
+    const header = ["Organization", 'Node Endpoint', "Voting power", "Public key"]
     return (
         <>
             <PageTitle title="Validator Nodes" />
