@@ -8,6 +8,7 @@ import {useRouter} from "next/navigation";
 import {PageTitle} from "@/app/components/pagetitle";
 import {useBlockchain, useExplorer} from "@/app/layout";
 import {useAsync} from "react-use";
+import Link from "next/link";
 
 export default function Applications() {
     const router = useRouter();
@@ -21,21 +22,26 @@ export default function Applications() {
         router.push(`/organisations/${organisationId}`)
     }
 
-    const header = ["Application ID", "Name",  "Website", "Organisation"]
+    const header = ["Organization", "Name",  "Description","Website"]
     const renderRow = async (row : Hash) => {
         const application = await blockchain.loadApplication(row);
         const orgId = application.getOrganizationId();
         const organisation = await blockchain.loadOrganization(orgId);
         return [
-            <>{row.encode()}</>,
+            <>
+
+                <Link href={`/organisations/${orgId.encode()}`}>
+                    <p>{organisation.getName()}</p>
+                </Link>
+            </>,
+            <>{application.getName()}</>,
             <>
 
                 <Tooltip title={application.getDescription() ?? 'No description provided.'}>
-                <p>{application.getName()}</p>
+                    <p>{application.getDescription().slice(0, 30)}</p>
                 </Tooltip>
             </>,
             <>{application.getWebsite()}</>,
-            <>{organisation.getName()}</>
         ]
     }
 
