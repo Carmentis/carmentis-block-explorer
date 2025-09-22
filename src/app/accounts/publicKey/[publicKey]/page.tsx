@@ -209,6 +209,8 @@ function AccountTransactionsHistory({ publicKey, accountHash }: { publicKey: str
                                 </td>
                                 <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-700">
                                     {transaction.isPurchase() && "Purchase"}
+                                    {transaction.isReceivedPayment() && "Received payment"}
+                                    {transaction.isReceivedIssuance() && "Received Issuance"}
                                     {transaction.isSale() && "Sale"}
                                     {transaction.isEarnedBlockFees() && "Earned block Fees"}
                                     {transaction.isSentPayment() && "Sent Payment"}
