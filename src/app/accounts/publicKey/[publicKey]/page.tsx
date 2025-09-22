@@ -14,7 +14,8 @@ export default function AccountByPublicKey() {
     const params = useParams<{ publicKey: string }>();
     const blockchain = useBlockchain();
     const {value, loading, error} = useAsync(async () => {
-        const publicKey = signatureEncoder.decodePublicKey(params.publicKey);
+        const decodedPublicKeyURIParam = decodeURIComponent(params.publicKey)
+        const publicKey = signatureEncoder.decodePublicKey(decodedPublicKeyURIParam);
         return await blockchain.getAccountHashFromPublicKey(publicKey);
     })
     
