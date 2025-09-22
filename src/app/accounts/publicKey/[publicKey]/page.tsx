@@ -13,8 +13,8 @@ export default function AccountByPublicKey() {
     const signatureEncoder = StringSignatureEncoder.defaultStringSignatureEncoder();
     const params = useParams<{ publicKey: string }>();
     const blockchain = useBlockchain();
+    const decodedPublicKeyURIParam = decodeURIComponent(params.publicKey);
     const {value, loading, error} = useAsync(async () => {
-        const decodedPublicKeyURIParam = decodeURIComponent(params.publicKey)
         const publicKey = signatureEncoder.decodePublicKey(decodedPublicKeyURIParam);
         return await blockchain.getAccountHashFromPublicKey(publicKey);
     })
@@ -24,7 +24,7 @@ export default function AccountByPublicKey() {
     }
     
     if (!value || error) {
-        return <AccountNotFound publicKey={params.publicKey} />
+        return <AccountNotFound publicKey={decodedPublicKeyURIParam} />
     }
 
     return (
@@ -32,8 +32,8 @@ export default function AccountByPublicKey() {
             <PageTitle title="Account Details" />
             <div className="bg-white rounded-lg shadow-md overflow-hidden">
                 <div className="p-6">
-                    <AccountStateComponent publicKey={params.publicKey} accountHash={value}  />
-                    <AccountTransactionsHistory publicKey={params.publicKey} accountHash={value} />
+                    <AccountStateComponent publicKey={decodedPublicKeyURIParam} accountHash={value}  />
+                    <AccountTransactionsHistory publicKey={decodedPublicKeyURIParam} accountHash={value} />
                 </div>
             </div>
         </div>
@@ -208,7 +208,12 @@ function AccountTransactionsHistory({ publicKey, accountHash }: { publicKey: str
                                     </span>
                                 </td>
                                 <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-700">
-
+                                    {transaction.isPurchase() && "Purchase"}
+                                    {transaction.isSale() && "Sale"}
+                                    {transaction.isEarnedBlockFees() && "Earned block Fees"}
+                                    {transaction.isSentPayment() && "Sent Payment"}
+                                    {transaction.isSentIssuance() && "Sent Issuance"}
+                                    {transaction.isPaidTxFees() && "Paid Tx Fees"}
                                 </td>
                             </tr>
                         ))}
