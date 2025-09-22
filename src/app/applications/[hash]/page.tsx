@@ -19,9 +19,9 @@ import {useAsync} from "react-use";
 const fetcher = async ( input: string[] ) =>  {
     console.assert(Array.isArray(input) && input.length === 2);
     console.assert(typeof input[1] === "string" );
-    const hash = Hash.from(input[1]);
+    const [hash] = Hash.from(input[1]);
     const blockchain = useBlockchain();
-    const application = await blockchain.loadApplication(hash);
+    const application = await blockchain.loadApplication([hash]);
     const description = await application.getDescription();
     const organisationId = await application.getOrganizationId();
     const organisation = await blockchain.loadOrganization(organisationId);

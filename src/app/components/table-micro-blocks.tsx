@@ -15,7 +15,7 @@ export default function TableMicroBlocks(props: TableMicroBlocksProps) {
     const blockchain = BlockchainFacade.createFromNodeUrl(network);
 
     async function renderMicroBlock( hash: Hash ) {
-        //const c = await sdk.blockchain.blockchainQuery.getMicroblockContent(data.hash)
+        //const c = await sdk.blockchain.blockchainQuery.getMicroblockContent(data.[hash])
         const mb = await blockchain.getMicroblockInformation(hash);
         const header = mb.getMicroBlockHeader();
         const vbState = mb.getVirtualBlockchainState();

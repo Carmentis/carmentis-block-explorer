@@ -30,7 +30,7 @@ export default function Accounts() {
             const accountDescription: AccountDescription = {
                 publicKey: accountPublicKey,
                 balance: accountData.getBalance(),
-                hash: accountHash.encode()
+                [hash]: accountHash.encode()
             }
             accounts.push(accountDescription);
         }
@@ -48,7 +48,7 @@ export default function Accounts() {
         const taggedPublicKey = sigEncoder.encodePublicKey(pk);
         const balance = row.balance;
          */
-        console.log("account hash:", accountHash.encode());
+        console.log("account [hash]:", accountHash.encode());
         const [publicKey, balance] = await Promise.all([
             blockchain.getPublicKeyOfAccount(accountHash),
             blockchain.getAccountBalance(accountHash)
@@ -71,7 +71,7 @@ export default function Accounts() {
         <>
             <PageTitle title="Accounts" />
             <DynamicTableComponent
-                header={["Public Key", "Account hash", "Balance"]}
+                header={["Public Key", "Account [hash]", "Balance"]}
                 data={data}
                 renderRow={renderRow}
                 onRowClicked={console.log}

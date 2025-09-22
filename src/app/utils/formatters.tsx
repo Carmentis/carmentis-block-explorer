@@ -17,9 +17,9 @@ export class Formatters {
     }
 
     /**
-     * Formats a hash object into a hexadecimal string representation.
-     * @param {Hash | Raw | Id} hash - The hash object to be formatted.
-     * @returns {string} The hexadecimal string representation of the hash.
+     * Formats a [hash] object into a hexadecimal string representation.
+     * @param {Hash | Raw | Id} hash - The [hash] object to be formatted.
+     * @returns {string} The hexadecimal string representation of the [hash].
      */
     public static formatHash(hash: Hash | Raw | Id): string {
         const bytesArray = new Uint8Array(Object.values(hash));
@@ -31,9 +31,9 @@ export class Formatters {
     }
 
     /**
-     * Reduces the size of a hash string by slicing it and adding ellipsis.
-     * @param {string} str - The hash string to be reduced.
-     * @returns {string} A shortened version of the hash string.
+     * Reduces the size of a [hash] string by slicing it and adding ellipsis.
+     * @param {string} str - The [hash] string to be reduced.
+     * @returns {string} A shortened version of the [hash] string.
      */
     static reduceHashSize(str: string): string {
         return str.slice(1, 10) + "...";

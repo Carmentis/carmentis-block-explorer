@@ -6,12 +6,22 @@ export default function useAccountSearchStrategy(search: string) {
     const blockchain = useBlockchain();
     const stringSignatureEncoder  = StringSignatureEncoder.defaultStringSignatureEncoder();
     return useAsync(async () => {
+        // we search by the account hash
         try {
-            const publicKey = stringSignatureEncoder.decodePublicKey(search);
-            const balance = await blockchain.getAccountBalanceFromPublicKey(publicKey);
-            return { publicKey, balance }
+            const accountPublicKey = await blockchain.getPublicKeyOfAccount(Hash.from(search));
+            const balance = await blockchain.getAccountBalanceFromPublicKey(accountPublicKey);
+            return { publicKey: accountPublicKey, balance }
+
         } catch (e) {
-            return undefined;
+            try {
+                const accountPublicKey = stringSignatureEncoder.decodePublicKey(search);
+                const balance = await blockchain.getAccountBalanceFromPublicKey(accountPublicKey);
+                return { publicKey: accountPublicKey, balance }
+            } catch (e) {
+                return undefined;
+            }
         }
+
+
     }, [search]);
 }

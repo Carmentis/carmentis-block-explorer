@@ -3120,7 +3120,7 @@ class Signature {
         const { r, s, recovery: rec } = this; // secg.org/sec1-v2.pdf 4.1.6
         if (![0, 1, 2, 3].includes(rec))
             err('recovery id invalid'); // check recovery id
-        const h = bits2int_modN(toU8(msgh, fLen)); // Truncate hash
+        const h = bits2int_modN(toU8(msgh, fLen)); // Truncate [hash]
         const radj = rec === 2 || rec === 3 ? r + N$1 : r; // If rec was 2 or 3, q.x is bigger than n
         if (radj >= P$1)
             err('q.x invalid'); // ensure q.x is still a field element
@@ -7642,7 +7642,7 @@ async function create$5(isGenesis, objectType) {
 // ============================================================================================================================ //
 //  computeGenesisId()                                                                                                          //
 // ---------------------------------------------------------------------------------------------------------------------------- //
-//  The genesis ID is the hash of the 48-bit timestamp and 128-bit seed.                                                        //
+//  The genesis ID is the [hash] of the 48-bit timestamp and 128-bit seed.                                                        //
 // ============================================================================================================================ //
 function computeGenesisId(block) {
   block.genesisId = sha256(from(intToByteArray(block.ts, 6), block.seed));
@@ -7714,7 +7714,7 @@ async function prepareBlockArray(block) {
 // ============================================================================================================================ //
 async function finalizeHeader(block, sigPrivKey, prevNonce, prevHash, gasPrice = TOKEN) {
   // -------------------------------------------------------------------------------------------------------------------------- //
-  //  if this is not a genesis block, set the current nonce and previous block hash                                             //
+  //  if this is not a genesis block, set the current nonce and previous block [hash]                                             //
   // -------------------------------------------------------------------------------------------------------------------------- //
   if(!block.isGenesis) {
     write48(block.array, prevNonce + 1, OFFSET_NONCE);
@@ -7744,7 +7744,7 @@ async function finalizeHeader(block, sigPrivKey, prevNonce, prevHash, gasPrice =
   block.array.set(signature, OFFSET_SIGNATURE);
 
   // -------------------------------------------------------------------------------------------------------------------------- //
-  //  compute the final block hash                                                                                              //
+  //  compute the final block [hash]                                                                                              //
   // -------------------------------------------------------------------------------------------------------------------------- //
   block.hash = sha256(block.array);
 }
@@ -7944,7 +7944,7 @@ async function decodeBodyContent(block, array) {
   }
 
   // -------------------------------------------------------------------------------------------------------------------------- //
-  //  body hash                                                                                                                 //
+  //  body [hash]                                                                                                                 //
   // -------------------------------------------------------------------------------------------------------------------------- //
   block.bodyHash = sha256(array.slice(BLK_HEADER_SIZE, ptr));
 
@@ -11610,7 +11610,7 @@ const getMasterBlock     = userFunction(getMasterBlock$1);
  *      masterBlock: number,
  *       version: number,
  *       nonce: number,
- *       hash: Uint8Array,
+ *       [hash]: Uint8Array,
  *       prevHash: Uint8Array,
  *       ts: number,
  *       nSection: number,
@@ -11630,14 +11630,14 @@ const getMasterBlock     = userFunction(getMasterBlock$1);
 const getMicroChain      = userFunction(getMicroChain$1);
 
 /**
- *  Returns information on the micro-block associated with the provided hash.
+ *  Returns information on the micro-block associated with the provided [hash].
  *
  * @param id {Uint8Array} The id of the micro block.
  *
  * @returns {Promise<{masterBlock: number,
  *       version: number,
  *       nonce: number,
- *       hash: Uint8Array,
+ *       [hash]: Uint8Array,
  *       prevHash: Uint8Array,
  *       ts: number,
  *       nSection: number,
@@ -11799,7 +11799,7 @@ const prepareApproval    = userFunction(prepareApproval$1);
  *     "flowObject": {
  *         "chain": {
  *             currentNonce: number,
- *             hash: Uint8Array,
+ *             [hash]: Uint8Array,
  *             "microBlock":
  *                 {
  *                     "version": number,
