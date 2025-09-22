@@ -42,26 +42,22 @@ export default function Accounts() {
 
     const sigEncoder = StringSignatureEncoder.defaultStringSignatureEncoder();
     const renderRow = async (accountHash : Hash) => {
-        /*
-        const
-        const pk = row.publicKey;
-        const taggedPublicKey = sigEncoder.encodePublicKey(pk);
-        const balance = row.balance;
-         */
-        console.log("account [hash]:", accountHash.encode());
         const [publicKey, balance] = await Promise.all([
             blockchain.getPublicKeyOfAccount(accountHash),
             blockchain.getAccountBalance(accountHash)
         ]);
         const pk = sigEncoder.encodePublicKey(publicKey);
+        const encodedAccountHash = accountHash.encode();
         return [
             <td key={0} onClick={() => router.push(`/accounts/publicKey/${pk}`)}>
                <Tooltip title={pk}>
                    <>{pk.slice(0, 20)}...{pk.slice(-20)}</>
                </Tooltip>
             </td>,
-            <td>{accountHash.encode()}</td>,
-            <td key={1}>{balance.toString()}</td>
+            <td key={1} onClick={() => router.push(`/accounts/hash/${encodedAccountHash}`)}>
+                {encodedAccountHash}
+            </td>,
+            <td key={2}>{balance.toString()}</td>
         ]
     }
 
