@@ -20,7 +20,7 @@ export default function Home() {
         <Box sx={{ maxWidth: 1200, mx: 'auto', px: { xs: 2, md: 3 }, py: 3 }}>
             <PageTitle title={"Dashboard"} />
             <Grid container spacing={2}>
-                <Grid size={{ lg: 7, md: 12 }}>
+                <Grid size={{ lg: 12, md: 12 }}>
                     <Card variant="outlined" sx={{ borderRadius: 2, overflow: 'hidden' }}>
                         <CardHeader
                             avatar={<Avatar variant="rounded" sx={{ bgcolor: 'primary.main', color: 'primary.contrastText' }}><LayersIcon /></Avatar>}
@@ -32,6 +32,7 @@ export default function Home() {
                         </CardContent>
                     </Card>
                 </Grid>
+                {/*
                 <Grid size={{ lg: 5, md: 12 }}>
                     <Card variant="outlined" sx={{ borderRadius: 2, overflow: 'hidden' }}>
                         <CardHeader
@@ -44,6 +45,7 @@ export default function Home() {
                         </CardContent>
                     </Card>
                 </Grid>
+                */}
             </Grid>
         </Box>
     );
