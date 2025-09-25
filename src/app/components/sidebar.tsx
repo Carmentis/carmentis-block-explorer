@@ -5,12 +5,6 @@ import {usePathname} from "next/navigation";
 import {useEffect, useState} from "react";
 
 export function Sidebar() {
-    const pathname = usePathname();
-    const isAlpha = typeof pathname === "string" && pathname.includes("alpha");
-    const env = isAlpha ? "alpha" : "beta";
-    const workspaceUrl = `https://workspace.${env}.carmentis.io`;
-    const exchangeUrl = `https://exchange.${env}.carmentis.io`;
-
     // State to track screen size
     const [isMobile, setIsMobile] = useState(false);
 
@@ -111,16 +105,6 @@ export function Sidebar() {
                                     name="Proof checker" 
                                     icon="bi-check"
                                 />
-                            </li>
-                            <li>
-                                <a 
-                                    href={exchangeUrl} 
-                                    target="_blank" 
-                                    className="flex items-center px-3 py-2 text-sm font-medium rounded-md hover:bg-gray-100 text-gray-700"
-                                >
-                                    <i className="bi bi-box-arrow-up-right mr-2"></i>
-                                    <span>Exchange</span>
-                                </a>
                             </li>
                         </ul>
                     </div>
