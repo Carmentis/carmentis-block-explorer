@@ -52,7 +52,7 @@ export default function Home() {
 }
 
 function LatestBlocks() {
-    const limit = 5;
+    const limit = 10;
     const { lastBlockHeight: lastBlock, loading } = useLatestBlockHeight();
 
     if (loading || lastBlock.isNone()) {
