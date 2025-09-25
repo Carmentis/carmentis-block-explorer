@@ -11,7 +11,6 @@ import Link from "next/link";
 import {useBlockchain} from "@/app/layout";
 
 export default function ProofChecker() {
-    const blockchain = useBlockchain();
 
     const [proof, setProof] = useState<Record<string, any> | undefined>();
     return (
@@ -167,7 +166,7 @@ function ProofCheckerUpload({onUpload}: { onUpload: (proof: any) => void }) {
 }
 
 function ProofViewer({proof, resetProof}: {resetProof: () => void, proof: Record<string, any>}) {
-    const blockchain = useBlockchain();
+    const blockchain = useBlockchain()
     const state = useAsync(async () => {
         const verificationResult = await blockchain.verifyProofFromJson(proof as any);
         const heights = verificationResult.getInvolvedBlockHeights();
@@ -212,8 +211,9 @@ function ProofViewer({proof, resetProof}: {resetProof: () => void, proof: Record
     }
 
     const {verificationResult, records} = state.value;
-    const header = proof.information;
-    const appLedgerId = proof.proofData.appLedgerId;
+    const header = proof.info;
+    console.log(proof, header)
+    const appLedgerId = verificationResult.getApplicationLedgerId().encode();
     const verified = verificationResult.isVerified();
     return (
         <div className="space-y-6">
@@ -253,7 +253,7 @@ function ProofViewer({proof, resetProof}: {resetProof: () => void, proof: Record
                             </div>
                             <div>
                                 <p className="text-sm text-gray-500">Proof Export Time</p>
-                                <p className="font-medium">{header.exportTime}</p>
+                                <p className="font-medium">{new Date(header.date).toLocaleString()}</p>
                             </div>
                         </div>
                         <div className="space-y-4">
@@ -268,12 +268,8 @@ function ProofViewer({proof, resetProof}: {resetProof: () => void, proof: Record
                                 </Link>
                             </div>
                             <div>
-                                <p className="text-sm text-gray-500">Application</p>
-                                <p className="font-medium">{header.application}</p>
-                            </div>
-                            <div>
-                                <p className="text-sm text-gray-500">Operator</p>
-                                <p className="font-medium">{header.applicationOperator}</p>
+                                <p className="text-sm text-gray-500">Author</p>
+                                <p className="font-medium">{header.author}</p>
                             </div>
                         </div>
                     </div>
