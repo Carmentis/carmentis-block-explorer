@@ -1,6 +1,6 @@
 import {useWebsocketNodeUrl} from "@/hooks/useWebsocketNodeUrl";
 import {useEffect, useState} from "react";
-import {BlockchainFacade, NewBlockEventType, Optional} from "@cmts-dev/carmentis-sdk/client";
+import {NewBlockEventType, Optional} from "@cmts-dev/carmentis-sdk/client";
 import {useNodeUrl} from "@/hooks/useNodeUrl";
 import {useAsync} from "react-use";
 
@@ -8,6 +8,7 @@ export default function useLatestBlockHeight(): { lastBlockHeight: Optional<numb
     const wsUrl = useWebsocketNodeUrl();
     const nodeUrl = useNodeUrl();
     const [lastBlock, setLastBlock] = useState<Optional<number>>(Optional.none());
+    /* TODO
     const blockchain = BlockchainFacade.createFromNodeUrl(nodeUrl);
     const {value: chainHeight, loading: loadingChainHeight} = useAsync(async () => {
         const chainInformation = await blockchain.getChainInformation();
@@ -34,6 +35,8 @@ export default function useLatestBlockHeight(): { lastBlockHeight: Optional<numb
             }
         })
     }, [wsUrl]);
+
+     */
 
     return {
         lastBlockHeight: lastBlock,

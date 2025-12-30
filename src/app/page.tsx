@@ -2,7 +2,6 @@
 
 import {useState} from 'react';
 import {PageTitle} from '@/app/components/pagetitle';
-import {BlockchainFacade} from "@cmts-dev/carmentis-sdk/client";
 import {Box, Card, CardContent, CardHeader, Divider, Grid2 as Grid, Skeleton, Table, TableBody, TableCell, TableHead, TableRow, Typography, Avatar} from "@mui/material";
 import Paper from "@mui/material/Paper";
 import BlockSizeHistory from "@/components/block-size-history";
@@ -12,7 +11,6 @@ import { useAtomValue } from 'jotai';
 import { networkAtom } from '@/atoms/network.atom';
 import { useRouter } from 'next/navigation';
 import LayersIcon from "@mui/icons-material/Layers";
-import GridViewIcon from "@mui/icons-material/GridView";
 import { routes } from '@/app/routes';
 
 export default function Home() {
@@ -113,12 +111,15 @@ function RowTable({ height }: { height: number }) {
     const [blockHash, setBlockHash] = useState("--");
 
     useAsync(async () => {
+        /*
         const blockchain = BlockchainFacade.createFromNodeUrl(network);
         const info = await blockchain.getBlockInformation(height);
         const content = await blockchain.getBlockContent(height);
         setAnchoredAt(info.anchoredAt().toLocaleString());
         setBlockHash(info.getBlockHash().encode());
         setNumberOfMicroblocks(content.numberOfContainedMicroBlocks().toString());
+
+         */
     }, [network, height]);
 
     function goToBlock() {

@@ -11,7 +11,7 @@ import './globals.css';
 // Components
 import {Navbar} from '@/app/components/navbar';
 import {Sidebar} from '@/app/components/sidebar';
-import {BlockchainFacade, Explorer, ProviderFactory} from '@cmts-dev/carmentis-sdk/client';
+import {ProviderFactory} from '@cmts-dev/carmentis-sdk/client';
 import {JotaiProvider} from "@/components/jotai.component";
 import {SWRConfig} from "swr";
 import axios from "axios";
@@ -31,15 +31,9 @@ const SWR_CONFIG = {
 export function useBlockchain() {
     // const node = process.env.NEXT_PUBLIC_NODE_URL;
     const node = useAtomValue(networkAtom);
-    return BlockchainFacade.createFromNodeUrl(node);
+    return ProviderFactory.createInMemoryProviderWithExternalProvider(node);
 }
 
-export function useExplorer() {
-   // const node = process.env.NEXT_PUBLIC_NODE_URL;
-    const node = useAtomValue(networkAtom);
-    const provider = ProviderFactory.createInMemoryProviderWithExternalProvider(node as string);
-    return Explorer.createFromProvider(provider);
-}
 
 const theme = createTheme({
     components: {

@@ -1,6 +1,6 @@
 'use client';
 
-import {CMTSToken, Hash, PublicSignatureKey, StringSignatureEncoder} from "@cmts-dev/carmentis-sdk/client";
+import {CMTSToken, CryptoEncoderFactory, Hash, PublicSignatureKey, Utils} from "@cmts-dev/carmentis-sdk/client";
 import {DynamicTableComponent} from "@/components/table.component";
 import Skeleton from "react-loading-skeleton";
 import {useRouter} from "next/navigation";
@@ -19,35 +19,28 @@ export default function Accounts() {
 
     const {value: data, loading, error} = useAsync(async () => {
 
-        /*
         const accountsHash = await blockchain.getAllAccounts();
-        const accounts = [];
-        for (let i = 0; i < accountsHash.length; i++) {
-            const accountHash = accountsHash[i];
-            const accountData = await blockchain.getAccountState(accountHash);
-            const account = await blockchain.loadAccount(accountHash);
-            const accountPublicKey =  account.getPublicKey();
-            const accountDescription: AccountDescription = {
-                publicKey: accountPublicKey,
-                balance: accountData.getBalance(),
-                [hash]: accountHash.encode()
-            }
-            accounts.push(accountDescription);
-        }
-
-         */
-        return blockchain.getAllAccounts();
+        return accountsHash
     })
 
 
-    const sigEncoder = StringSignatureEncoder.defaultStringSignatureEncoder();
+    const sigEncoder = CryptoEncoderFactory.defaultStringSignatureEncoder();
     const renderRow = async (accountHash : Hash) => {
+        /*
         const [publicKey, balance] = await Promise.all([
             blockchain.getPublicKeyOfAccount(accountHash),
             blockchain.getAccountBalance(accountHash)
         ]);
-        const pk = sigEncoder.encodePublicKey(publicKey);
-        const encodedAccountHash = accountHash.encode();
+         */
+        //const pk = sigEncoder.encodePublicKey(publicKey);
+        //const encodedAccountHash = accountHash.encode();
+        const sigEncoder = await CryptoEncoderFactory.defaultStringSignatureEncoder();
+        const account = await blockchain.getAccountState(accountHash.toBytes());
+        const accountVb =  await blockchain.loadAccountVirtualBlockchain(accountHash);
+        const pk = await sigEncoder.encodePublicKey(await accountVb.getPublicKey());
+        const encodedAccountHash = Utils.binaryToHexa(accountHash.toBytes())
+        console.log(account)
+        const balance = CMTSToken.createAtomic(account.balance);
         return [
             <td key={0} onClick={() => router.push(`/accounts/publicKey/${pk}`)}>
                <Tooltip title={pk}>

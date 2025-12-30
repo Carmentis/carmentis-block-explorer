@@ -1,38 +1,55 @@
 'use client';
 
-import {Hash} from "@cmts-dev/carmentis-sdk/client";
+import {Hash, Logger} from "@cmts-dev/carmentis-sdk/client";
 import Skeleton from "react-loading-skeleton";
 import TableComponent, {DynamicTableComponent} from "@/components/table.component";
 import {useAtomValue} from "jotai/index";
 import {networkAtom} from "@/atoms/network.atom";
 import useSWR from "swr";
 import {PageTitle} from "@/app/components/pagetitle";
-import {useBlockchain, useExplorer} from "@/app/layout";
+import {useBlockchain} from "@/app/layout";
 import {useAsync} from "react-use";
-
-
+import {configure, getConsoleSink} from "@logtape/logtape";
+import {useEffect} from "react";
 
 
 export default function ValidatorNodes() {
 
+    useEffect(() => {
+        configure({
+            sinks: { console: getConsoleSink() },
+            loggers: [
+                { category: "@cmts-dev/carmentis-sdk", lowestLevel: "fatal", sinks: ["console"] }
+            ]
+        })
+    }, []);
 
-    const blockchain = useBlockchain();
+    const provider = useBlockchain();
     const { value: data, loading, error } = useAsync(async () => {
-        const nodes = await blockchain.getAllValidatorNodes();
+        const nodes = await provider.getAllValidatorNodes();
         return nodes;
     })
 
     const renderRow = async (hash:Hash) => {
-        const validator = await blockchain.loadValidatorNode(hash);
+        console.log("Loading vb id")
+        const validator = await provider.loadValidatorNodeVirtualBlockchain(hash);
+        const validatorState = validator.getInternalState();
+        console.log(validatorState)
+        const org = await validator.getOrganizationVirtualBlockchain()
+        const orgDesc = await org.getDescription()
+        /*
+
         const organizationId = validator.getOrganizationId();
-        const organization = await  blockchain.loadOrganization(organizationId);
-        const accountHash = await blockchain.getAccountHashFromPublicKey(organization.getPublicKey());
+        const organization = await  provider.loadOrganization(organizationId);
+        const accountHash = await provider.getAccountHashFromPublicKey(organization.getPublicKey());
         const rpcEndpoint = validator.getRpcEndpoint();
+
+         */
         return [
-            <>{organization.getName()}</>,
-            <>{rpcEndpoint}</>,
-            <>{validator.getVotingPower()}</>,
-            <>{validator.getCometPublicKey()}</>,
+            <>{orgDesc.name}</>,
+            <>{}</>,
+            <>{}</>,
+            <>{}</>,
         ]
     }
 
