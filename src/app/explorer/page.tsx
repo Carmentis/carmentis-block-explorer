@@ -16,7 +16,7 @@ import GridViewIcon from "@mui/icons-material/GridView";
 import HubIcon from "@mui/icons-material/Hub";
 import AccountBalanceWalletIcon from "@mui/icons-material/AccountBalanceWallet";
 import { routes } from "@/app/routes";
-import {StringSignatureEncoder} from "@cmts-dev/carmentis-sdk/client";
+import {CryptoEncoderFactory} from "@cmts-dev/carmentis-sdk/client";
 
 // A lightweight, minimalist card wrapper to unify loading/error/empty states
 function ResultCard({
@@ -180,9 +180,9 @@ function handleBlockResultDisplay(search: string) {
             <Stack spacing={1}>
                 <Stack spacing={0.5}>
                     <Typography variant="body2" color="text.secondary">Height</Typography>
-                    <Typography variant="h6">{foundBlock.getBlockHeight()}</Typography>
+                    <Typography variant="h6">{search}</Typography>
                 </Stack>
-                <Button component={Link} href={routes.explorer.block(foundBlock.getBlockHeight())} variant="contained" size="small">
+                <Button component={Link} href={routes.explorer.block(search)} variant="contained" size="small">
                     Open
                 </Button>
             </Stack>
@@ -209,7 +209,7 @@ function handleAccountSearchDisplay(search: string) {
 
     let content;
     if (value) {
-        const encoder = StringSignatureEncoder.defaultStringSignatureEncoder();
+        const encoder = CryptoEncoderFactory.defaultStringSignatureEncoder();
         const publicKey = encoder.encodePublicKey(value.publicKey);
         content = <Stack spacing={1}>
             <Stack spacing={0.5}>

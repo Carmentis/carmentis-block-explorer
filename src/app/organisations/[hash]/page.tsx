@@ -1,7 +1,7 @@
 'use client';
 
 import {
-    Box,
+    Box, Button, ButtonGroup,
     CircularProgress,
     Container,
     Paper,
@@ -16,23 +16,22 @@ import useSWR from 'swr';
 import {useParams, useRouter} from "next/navigation";
 import {
     Hash,
-    OrganizationWrapper,
-    OrganizationDescription,
-    StringSignatureEncoder
+    CryptoEncoderFactory, OrganizationVb
 } from '@cmts-dev/carmentis-sdk/client';
 import React from 'react';
 import AvatarPlaceholder from 'boring-avatars';
 import {useBlockchain} from "@/app/layout";
 import {useAsync} from "react-use";
+import Link from "next/link";
 
 
 
 export default function OrganisationPage() {
     const params = useParams<{hash: string}>();
     const organisationId = Hash.from(params.hash);
-    const blockchain = useBlockchain();
+    const provider = useBlockchain();
     const {value: data, loading: isLoading, error} = useAsync(async () => {
-        return blockchain.loadOrganization(organisationId);
+        return provider.loadOrganizationVirtualBlockchain(organisationId);
     });
 
 
@@ -59,22 +58,41 @@ export default function OrganisationPage() {
     />;
 }
 
-
-
-
-const OrganisationDetail = ({organisation}: {organisation: OrganizationWrapper}) => {
+const OrganisationDetail = ({organisation}: {organisation: OrganizationVb}) => {
     const router = useRouter();
-    const sigEncoder = StringSignatureEncoder.defaultStringSignatureEncoder();
+    const provider = useBlockchain();
+    const {value: orgDesc, loading: isLoadingDesc, error: descLoadingError} = useAsync(async () => {
+        return await organisation.getDescription();
+    });
+
+    const {value: orgAccountId, loading: isLoadingAccountId} = useAsync(async () => {
+        return organisation.getAccountId().encode();
+    });
+
+    const sigEncoder = CryptoEncoderFactory.defaultStringSignatureEncoder();
+    const {value: orgPk, loading: isLoadingPk, error: pkLoadingError} = useAsync(async () => {
+        const accountId = await organisation.getAccountId();
+        const accountVb = await provider.loadAccountVirtualBlockchain(accountId);
+        return sigEncoder.encodePublicKey(await accountVb.getPublicKey());
+    });
+
+    if (isLoadingDesc) {
+        return <>Loading...</>
+    }
+    if (descLoadingError || !orgDesc) {
+        return <>An error occurred: {descLoadingError?.message || 'Unknown error'}</>
+    }
+
     return (
         <Container component={Paper} sx={{p: 4}}>
             <Box display="flex" flexDirection="column" alignItems="center" mb={4}>
                 <AvatarPlaceholder
                     size={100}
-                    name={organisation.getName()}
+                    name={orgDesc.name}
                     variant="marble"
                 />
                 <Typography variant="h5" mt={2}>
-                    {organisation.getName()}
+                    {orgDesc.name}
                 </Typography>
             </Box>
             <TableContainer>
@@ -82,13 +100,24 @@ const OrganisationDetail = ({organisation}: {organisation: OrganizationWrapper})
                     <TableBody>
                         <TableRow>
                             <TableCell><Typography variant="subtitle1">Location</Typography></TableCell>
-                            <TableCell>{`${organisation.getCity()} (${organisation.getCountryCode()})`}</TableCell>
+                            <TableCell>{`${orgDesc.city} (${orgDesc.countryCode})`}</TableCell>
                             <TableCell></TableCell>
                         </TableRow>
                         <TableRow>
                             <TableCell><Typography variant="subtitle1">Public Key</Typography></TableCell>
                             <TableCell>
-                                {sigEncoder.encodePublicKey(organisation.getPublicKey())}
+                                {orgPk}
+                            </TableCell>
+                            <TableCell>
+                            </TableCell>
+                        </TableRow>
+                        <TableRow>
+                            <TableCell><Typography variant="subtitle1">Account ID</Typography></TableCell>
+                            <TableCell>
+                                <a href={`/accounts/hash/${orgAccountId}`} target="_blank" rel="noopener noreferrer">
+                                    {orgAccountId}
+                                </a>
+
                             </TableCell>
                             <TableCell>
                             </TableCell>
@@ -97,8 +126,8 @@ const OrganisationDetail = ({organisation}: {organisation: OrganizationWrapper})
                         <TableRow>
                             <TableCell><Typography variant="subtitle1">Website</Typography></TableCell>
                             <TableCell>
-                                <a href={organisation.getWebsite()} target="_blank" rel="noopener noreferrer">
-                                    {organisation.getWebsite()}
+                                <a href={orgDesc.website} target="_blank" rel="noopener noreferrer">
+                                    {orgDesc.website}
                                 </a>
                             </TableCell>
                             <TableCell></TableCell>
@@ -106,6 +135,12 @@ const OrganisationDetail = ({organisation}: {organisation: OrganizationWrapper})
                     </TableBody>
                 </Table>
             </TableContainer>
+
+            <ButtonGroup>
+                <Link href={`/explorer/virtualBlockchain/${organisation.getIdentifier().encode()}`}>
+                    <Button>Visit Virtual blockchain</Button>
+                </Link>
+            </ButtonGroup>
         </Container>
     );
 };

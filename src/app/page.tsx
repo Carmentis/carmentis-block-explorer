@@ -12,6 +12,8 @@ import { networkAtom } from '@/atoms/network.atom';
 import { useRouter } from 'next/navigation';
 import LayersIcon from "@mui/icons-material/Layers";
 import { routes } from '@/app/routes';
+import {useBlockchain} from "@/app/layout";
+import {Hash} from '@cmts-dev/carmentis-sdk/client';
 
 export default function Home() {
     return (
@@ -105,22 +107,22 @@ function LatestBlocks() {
 
 function RowTable({ height }: { height: number }) {
     const navigation = useRouter();
-    const network = useAtomValue(networkAtom);
+    const blockchain = useBlockchain();
     const [numberOfMicroblocks, setNumberOfMicroblocks] = useState("--");
     const [anchoredAt, setAnchoredAt] = useState("--");
     const [blockHash, setBlockHash] = useState("--");
 
-    useAsync(async () => {
-        /*
-        const blockchain = BlockchainFacade.createFromNodeUrl(network);
+    const state =useAsync(async () => {
         const info = await blockchain.getBlockInformation(height);
         const content = await blockchain.getBlockContent(height);
-        setAnchoredAt(info.anchoredAt().toLocaleString());
-        setBlockHash(info.getBlockHash().encode());
-        setNumberOfMicroblocks(content.numberOfContainedMicroBlocks().toString());
 
-         */
-    }, [network, height]);
+        setBlockHash(Hash.from(info.hash).encode());
+        setNumberOfMicroblocks(content.microblocks.length.toString());
+        setAnchoredAt(new Date(info.timestamp * 1000).toLocaleString());
+
+    }, [ height]);
+
+    console.log("error:", state)
 
     function goToBlock() {
         navigation.push(routes.explorer.block(height));

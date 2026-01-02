@@ -1,26 +1,31 @@
 'use client'
 
 import {useParams, useRouter} from "next/navigation";
-import {BlockchainFacade, Hash, Microblock, MicroBlockInformation, MicroBlockWrapper} from "@cmts-dev/carmentis-sdk/client";
+import {
+    Hash,
+    Microblock,
+    SectionLabel,
+    Utils
+} from "@cmts-dev/carmentis-sdk/client";
 import useSWR from "swr";
 import {useAtomValue} from "jotai/index";
 import {networkAtom} from "@/atoms/network.atom";
 import Link from "next/link";
 import {PageTitle} from "@/app/components/pagetitle";
-import {useExplorer} from "@/app/layout";
+import {useBlockchain} from "@/app/layout";
 import {useAsync} from "react-use";
+import {Button} from "@mui/material";
 
 
 
 export default function MicroBlockExplorer() {
-    const network = useAtomValue(networkAtom);
-    const blockchain = BlockchainFacade.createFromNodeUrl(network);
+    const provider = useBlockchain();
 
     // load the params
     const params = useParams<{ hash: string }>();
     const hash = Hash.from(params.hash);
     const { value: data, loading: isLoading, error } = useAsync(async () => {
-        return await blockchain.getMicroBlock(hash)
+        return await provider.loadMicroblockByMicroblockHash(hash)
     })
 
     if (error) {
@@ -55,19 +60,22 @@ export default function MicroBlockExplorer() {
     return (
         <>
             <PageTitle title={`Microblock`} />
-            <DataDisplay info={data} />
+            <DataDisplay mb={data} />
         </>
     );
 }
 
-const DataDisplay = ({ info }: { info: MicroBlockWrapper }) => {
+const DataDisplay = ({ mb }: { mb: Microblock }) => {
     const router = useRouter();
-    const height = info.getHeight();
-    const gas = info.getGas().toString();
-    const gasPrice = info.getGasPrice().toString();
-    const previousHash = info.getPreviousHash();
-    const vbId = info.getVirtualBlockchainId().encode();
-    const accountId = info.getFeesPayerAccount();
+    const height = mb.getHeight();
+    const gas = mb.getGas().toString();
+    const gasPrice = mb.getGasPrice().toString();
+    const previousHash = mb.getPreviousHash();
+    const provider = useBlockchain();
+    const accountId = Hash.from(Utils.getNullHash()).encode(); // TODO: fill
+    const {value: vbId, loading: isLoading} = useAsync(async () => {
+        return await provider.getVirtualBlockchainIdContainingMicroblock(mb.getHash());
+    })
 
     return (
         <div className="space-y-6">
@@ -79,7 +87,7 @@ const DataDisplay = ({ info }: { info: MicroBlockWrapper }) => {
                         <div className="space-y-4">
                             <div>
                                 <p className="text-sm text-gray-500">Hash</p>
-                                <p className="font-mono text-sm break-all">{info.getMicroBlockHash().encode()}</p>
+                                <p className="font-mono text-sm break-all">{mb.getHash().encode()}</p>
                             </div>
                             <div>
                                 <p className="text-sm text-gray-500">Height</p>
@@ -88,10 +96,10 @@ const DataDisplay = ({ info }: { info: MicroBlockWrapper }) => {
                             <div>
                                 <p className="text-sm text-gray-500">Virtual blockchain</p>
                                 <Link
-                                    href={`/explorer/virtualBlockchain/${vbId}`}
+                                    href={`/explorer/virtualBlockchain/${vbId ? vbId.encode() : ''}`}
                                     className="font-mono text-sm text-blue-600 hover:text-blue-800 break-all"
                                 >
-                                    {vbId}
+                                    {vbId ? vbId.encode() : 'Loading...'}
                                 </Link>
                             </div>
                             <div>
@@ -111,7 +119,7 @@ const DataDisplay = ({ info }: { info: MicroBlockWrapper }) => {
                         <div className="space-y-4">
                             <div>
                                 <p className="text-sm text-gray-500">Timestamp</p>
-                                <p className="font-medium">{info.getTimestamp().toLocaleString()}</p>
+                                <p className="font-medium">{mb.getTimestampAsDate().toLocaleString()}</p>
                             </div>
                             <div>
                                 <p className="text-sm text-gray-500">Gas</p>
@@ -123,17 +131,7 @@ const DataDisplay = ({ info }: { info: MicroBlockWrapper }) => {
                             </div>
                             <div>
                                 <p className="text-sm text-gray-500">Fees payer account</p>
-                                {
-                                    accountId.isNone() ?
-                                        <p className="font-medium">--</p>
-                                        :
-                                        <Link
-                                            href={`/account/${accountId.unwrap().encode()}`}
-                                            className="font-mono text-sm text-blue-600 hover:text-blue-800 break-all"
-                                        >
-                                            {accountId.unwrap().encode()}
-                                        </Link>
-                                }
+
                             </div>
                         </div>
                     </div>
@@ -145,24 +143,24 @@ const DataDisplay = ({ info }: { info: MicroBlockWrapper }) => {
                 <div className="p-6">
                     <h2 className="text-xl font-semibold text-gray-800 mb-4">Sections</h2>
                     <p className="text-gray-600 mb-6">
-                        Sections represent parts of a microblock. Each section is the most atomic unit of a microblock.
+                        Below is displayed the list of sections contained in the microblock.
                     </p>
 
                     <div className="overflow-x-auto">
                         <table className="min-w-full divide-y divide-gray-200">
                             <thead className="bg-gray-50">
                                 <tr>
-                                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">ID</th>
-                                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Label</th>
-                                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Size</th>
+                                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Section Type</th>
+                                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Content</th>
                                 </tr>
                             </thead>
                             <tbody className="bg-white divide-y divide-gray-200">
-                            {info.getAllSections().map((section) => (
+                            {mb.getAllSections().map((section) => (
                                 <tr key={section.type} className="hover:bg-blue-50">
-                                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-700">{section.type}</td>
-                                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-700">{section.type}</td>
-                                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-700">{section.data.length} bytes</td>
+                                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-700">{SectionLabel.getSectionLabelFromSection(section)}</td>
+                                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-700">
+                                        <Button onClick={() => alert(JSON.stringify(section))}>See section content</Button>
+                                    </td>
                                 </tr>
                             ))}
                             </tbody>

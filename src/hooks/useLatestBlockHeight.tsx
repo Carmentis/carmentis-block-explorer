@@ -1,18 +1,19 @@
 import {useWebsocketNodeUrl} from "@/hooks/useWebsocketNodeUrl";
 import {useEffect, useState} from "react";
-import {NewBlockEventType, Optional} from "@cmts-dev/carmentis-sdk/client";
+import {NewBlockEventType, Optional, CometBFTNodeWebSocket} from "@cmts-dev/carmentis-sdk/client";
 import {useNodeUrl} from "@/hooks/useNodeUrl";
 import {useAsync} from "react-use";
+import {useBlockchain} from "@/app/layout";
 
 export default function useLatestBlockHeight(): { lastBlockHeight: Optional<number>, loading: boolean } {
     const wsUrl = useWebsocketNodeUrl();
     const nodeUrl = useNodeUrl();
     const [lastBlock, setLastBlock] = useState<Optional<number>>(Optional.none());
-    /* TODO
-    const blockchain = BlockchainFacade.createFromNodeUrl(nodeUrl);
+    const blockchain = useBlockchain();
+
     const {value: chainHeight, loading: loadingChainHeight} = useAsync(async () => {
         const chainInformation = await blockchain.getChainInformation();
-        return chainInformation.getHeight();
+        return chainInformation.height;
     }, [nodeUrl])
 
     // this method is used to initially update the height of the chain
@@ -27,7 +28,7 @@ export default function useLatestBlockHeight(): { lastBlockHeight: Optional<numb
 
     // this method is used to update the height of the chain when a new block is received
     useEffect(() => {
-        const client = BlockchainFacade.createWebSocketForNode(wsUrl);
+        const client = CometBFTNodeWebSocket.new(wsUrl);
         client.addCallback({
             onNewBlock: (event: NewBlockEventType) => {
                 const height = Number.parseInt(event.result.data.value.block.header.height);
@@ -35,8 +36,6 @@ export default function useLatestBlockHeight(): { lastBlockHeight: Optional<numb
             }
         })
     }, [wsUrl]);
-
-     */
 
     return {
         lastBlockHeight: lastBlock,

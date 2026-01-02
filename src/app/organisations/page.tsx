@@ -1,27 +1,35 @@
 'use client';
 
-import {AccountState, CMTSToken, Hash, StringSignatureEncoder} from "@cmts-dev/carmentis-sdk/client";
+import {AccountState, CMTSToken, Hash} from "@cmts-dev/carmentis-sdk/client";
 import Skeleton from "react-loading-skeleton";
 import {DynamicTableComponent} from "@/components/table.component";
-import {useAtomValue} from "jotai/index";
-import {networkAtom} from "@/atoms/network.atom";
 import {useRouter} from "next/navigation";
 import {PageTitle} from "@/app/components/pagetitle";
-import {useBlockchain, useExplorer} from "@/app/layout";
+import {useBlockchain, } from "@/app/layout";
 import {useAsync} from "react-use";
 import {Tooltip} from "@mui/material";
+import OrganizationLinkCell from "@/components/tableCells/OrganizationLinkCell";
 
 
 export default function OrganisationsPage() {
     const router = useRouter();
-    const blockchain = useBlockchain();
+    const provider = useBlockchain();
 
     const {value: data, loading, error} = useAsync(async () => {
-        return await blockchain.getAllOrganizations();
+        return await provider.getAllOrganizationIds();
     })
 
     const header = ["Name",  "Hash", "Location", "Website", "Public Key", "Balance"]
     const renderRow = async (organisationId : Hash) => {
+        const orgVb = await provider.loadOrganizationVirtualBlockchain(organisationId);
+        const orgDesc = await orgVb.getDescription();
+        return [
+            <OrganizationLinkCell orgId={organisationId} orgName={orgDesc.name}/>,
+            <>{organisationId.encode()}</>,
+            <>{orgDesc.city} ({orgDesc.countryCode})</>,
+            <>{orgDesc.website}</>,
+        ]
+        /*
         const organisation = await blockchain.loadOrganization(organisationId);
         const publicKey = organisation.getPublicKey();
         const sigEncoder = StringSignatureEncoder.defaultStringSignatureEncoder();
@@ -40,6 +48,8 @@ export default function OrganisationsPage() {
             </>,
             <>{balance.toString()}</>
         ]
+
+         */
     }
 
 

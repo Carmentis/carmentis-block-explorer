@@ -6,16 +6,16 @@ import {Tooltip} from "@mui/material";
 import {DynamicTableComponent} from "@/components/table.component";
 import {useRouter} from "next/navigation";
 import {PageTitle} from "@/app/components/pagetitle";
-import {useBlockchain, useExplorer} from "@/app/layout";
+import {useBlockchain} from "@/app/layout";
 import {useAsync} from "react-use";
 import Link from "next/link";
 
 export default function Applications() {
     const router = useRouter();
-    const blockchain = useBlockchain();
+    const provider = useBlockchain();
 
     const {value: data, loading, error} = useAsync(async () => {
-        return await blockchain.getAllApplications();
+        return await provider.getAllApplicationIds();
     })
 
     function goToOrganisation(organisationId: string) {
@@ -24,25 +24,31 @@ export default function Applications() {
 
     const header = ["Organization", "Name",  "Description","Website"]
     const renderRow = async (row : Hash) => {
-        const application = await blockchain.loadApplication(row);
+        const application = await provider.loadApplicationVirtualBlockchain(row);
+
         const orgId = application.getOrganizationId();
-        const organisation = await blockchain.loadOrganization(orgId);
+        const organisation = await provider.loadOrganizationVirtualBlockchain(orgId);
+        const orgDesc = await organisation.getDescription();
         return [
             <>
 
                 <Link href={`/organisations/${orgId.encode()}`}>
-                    <p>{organisation.getName()}</p>
+                    <p>{orgId.encode()}</p>
                 </Link>
             </>,
-            <>{application.getName()}</>,
-            <>
+            <>{orgDesc.name}</>,
+
+        ]
+
+        /*
+          <>
 
                 <Tooltip title={application.getDescription() ?? 'No description provided.'}>
                     <p>{application.getDescription().slice(0, 30)}</p>
                 </Tooltip>
             </>,
             <>{application.getWebsite()}</>,
-        ]
+         */
     }
 
     if (loading) return <Skeleton/>

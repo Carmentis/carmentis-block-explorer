@@ -1,7 +1,7 @@
 import {useRouter} from "next/navigation";
-import {Hash, BlockchainFacade} from "@cmts-dev/carmentis-sdk/client";
+import {Hash} from "@cmts-dev/carmentis-sdk/client";
 import {DynamicTableComponent} from "@/components/table.component";
-import {useExplorer} from "@/app/layout";
+import {useBlockchain} from "@/app/layout";
 import {useAtomValue} from "jotai";
 import {networkAtom} from "@/atoms/network.atom";
 import {TableCell, TableRow} from "@mui/material";
@@ -11,21 +11,19 @@ export type TableMicroBlocksProps = {
 }
 export default function TableMicroBlocks(props: TableMicroBlocksProps) {
     const router = useRouter();
-    const network = useAtomValue(networkAtom)
-    const blockchain = BlockchainFacade.createFromNodeUrl(network);
+    const provider = useBlockchain();
 
     async function renderMicroBlock( hash: Hash ) {
         //const c = await sdk.blockchain.blockchainQuery.getMicroblockContent(data.[hash])
-        const mb = await blockchain.getMicroblockInformation(hash);
-        const header = mb.getMicroBlockHeader();
-        const vbState = mb.getVirtualBlockchainState();
+        const mb = await provider.loadMicroblockByMicroblockHash(hash);
+        if (mb === null) return <>An error occurred: Microblock not found</>
         const microBlockHash = hash.encode();
 
 
         return [
             <TableCell key={0}>{microBlockHash}</TableCell>,
-            <TableCell key={2}>{vbState.getVbId().encode()}</TableCell>,
-            <TableCell key={1}>{header.getHeight()}</TableCell>,
+            <TableCell key={2}></TableCell>,
+            <TableCell key={1}>{mb.getHeight()}</TableCell>,
         ]
     }
 

@@ -2,32 +2,46 @@
 
 import {useParams, useRouter} from "next/navigation";
 import {
-    BlockchainFacade,
     Hash,
     VB_ACCOUNT,
     VB_APP_LEDGER,
     VB_APPLICATION,
     VB_ORGANIZATION,
-    VB_VALIDATOR_NODE
+    VB_VALIDATOR_NODE, VirtualBlockchainLabel, VirtualBlockchainType,
+    VirtualBlockchainState, VirtualBlockchain
 } from '@cmts-dev/carmentis-sdk/client';
-import useSWR from "swr";
 import {PageTitle} from "@/app/components/pagetitle";
 import TableMicroBlocks from "@/app/components/table-micro-blocks";
-import {useBlockchain, useExplorer} from "@/app/layout";
+import {useBlockchain} from "@/app/layout";
 import { useAsync } from "react-use";
-import { useAtomValue } from "jotai";
-import { networkAtom } from "@/atoms/network.atom";
 
 
 export default function Page() {
-    const network = useAtomValue(networkAtom);
-    const blockchain = BlockchainFacade.createFromNodeUrl(network);
+    const provider = useBlockchain();
     const params = useParams<{ hash: string }>();
     const hash = Hash.from(params.hash);
     const router = useRouter();
 
     const { value: data, loading: isLoading, error } = useAsync(async () => {
-        return await blockchain.getVirtualBlockchain(hash);
+        const vb: VirtualBlockchain = await provider.loadVirtualBlockchain(hash);
+        const state: VirtualBlockchainState = await vb.getVirtualBlockchainState();
+        return {vb, state}
+        /*
+        const vbStatus = await provider.getVirtualBlockchainState(hash.toBytes());
+        if (vbStatus === null) throw new Error(
+            `Virtual Blockchain with hash ${hash.encode()} does not exist.`
+        );
+        switch (vbStatus.type) {
+            case VirtualBlockchainType.ACCOUNT_VIRTUAL_BLOCKCHAIN: return await provider.loadAccountVirtualBlockchain(hash);
+            case VirtualBlockchainType.ORGANIZATION_VIRTUAL_BLOCKCHAIN: return await provider.loadOrganizationVirtualBlockchain(hash);
+            case VirtualBlockchainType.APPLICATION_VIRTUAL_BLOCKCHAIN: return await provider.loadApplicationVirtualBlockchain(hash);
+            case VirtualBlockchainType.NODE_VIRTUAL_BLOCKCHAIN:  return await provider.loadValidatorNodeVirtualBlockchain(hash);
+            case VirtualBlockchainType.PROTOCOL_VIRTUAL_BLOCKCHAIN: return await provider.loadProtocolVirtualBlockchain(hash);
+            case VirtualBlockchainType.APP_LEDGER_VIRTUAL_BLOCKCHAIN: return await provider.loadApplicationLedgerVirtualBlockchain(hash);
+            default: throw new Error(`Unknown virtual blockchain type: ${vbStatus.type}`);
+        }
+
+         */
     })
 
     if (isLoading) {
@@ -62,19 +76,14 @@ export default function Page() {
     }
 
 
-    const virtualBlockchainState = data.getVirtualBlockchainState();
-    const lastMicroBlockHash = virtualBlockchainState.getLastMicroblockHash().encode()
-    const height = virtualBlockchainState.getHeight();
-    const microBlockHashes = data.getMicroBlockHashes();
+    const vb = data.vb;
+    //const lastMicroBlockHash = virtualBlockchainState.getLastMicroblockHash().encode()
+    const height = data.vb.getHeight();
+    const microblockHashes = vb.getAllMicroblockHashes();
 
     // Get the type label based on the type constant
     const getTypeLabel = () => {
-        if (virtualBlockchainState.isAccountVirtualBlockchain()) return 'Account Virtual Blockchain';
-        if (virtualBlockchainState.isNodeVirtualBlockchain()) return 'Node Virtual Blockchain';
-        if (virtualBlockchainState.isOrganizationVirtualBlockchain()) return 'Organization Virtual Blockchain';
-        if (virtualBlockchainState.isApplicationVirtualBlockchain()) return 'Application Virtual Blockchain';
-        if (virtualBlockchainState.isApplicationLedgerVirtualBlockchain()) return 'Ledger Virtual Blockchain';
-        return 'Unknown';
+        return VirtualBlockchainLabel.getVirtualBlockchainLabelFromVirtualBlockchainType(vb.getType()).replaceAll("_", " ");
     };
 
 
@@ -118,14 +127,14 @@ export default function Page() {
                     </div>
                 </div>
 
-                {/* Microblocks Card */}
+                {/* Microblocks Card  */}
                 <div className="bg-white rounded-lg shadow-md overflow-hidden">
                     <div className="p-6">
                         <h2 className="text-xl font-semibold text-gray-800 mb-4">Microblocks</h2>
                         <p className="text-gray-600 mb-6">
                             This virtual blockchain contains the following microblocks. Click on a microblock to view its details.
                         </p>
-                        <TableMicroBlocks hashes={microBlockHashes} />
+                        <TableMicroBlocks hashes={microblockHashes} />
                     </div>
                 </div>
 

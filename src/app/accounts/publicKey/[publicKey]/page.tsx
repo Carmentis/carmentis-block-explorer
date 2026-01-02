@@ -1,6 +1,13 @@
 'use client';
 
-import {Hash, StringSignatureEncoder} from '@cmts-dev/carmentis-sdk/client';
+import {
+    Hash,
+    CryptoEncoderFactory,
+    CMTSToken,
+    AccountTransactions,
+    AccountTransaction,
+    BalanceAvailability
+} from '@cmts-dev/carmentis-sdk/client';
 import React from "react";
 import {useParams} from "next/navigation";
 import {PageTitle} from "@/app/components/pagetitle";
@@ -10,13 +17,13 @@ import Spinner from "@/app/components/loading-page.component";
 
 
 export default function AccountByPublicKey() {
-    const signatureEncoder = StringSignatureEncoder.defaultStringSignatureEncoder();
+    const signatureEncoder = CryptoEncoderFactory.defaultStringSignatureEncoder();
     const params = useParams<{ publicKey: string }>();
     const blockchain = useBlockchain();
     const decodedPublicKeyURIParam = decodeURIComponent(params.publicKey);
     const {value, loading, error} = useAsync(async () => {
-        const publicKey = signatureEncoder.decodePublicKey(decodedPublicKeyURIParam);
-        return await blockchain.getAccountHashFromPublicKey(publicKey);
+        const publicKey = await signatureEncoder.decodePublicKey(decodedPublicKeyURIParam);
+        return await blockchain.getAccountIdByPublicKey(publicKey);
     })
     
     if (loading) {
@@ -67,10 +74,16 @@ function AccountNotFound({ publicKey }: { publicKey: string }) {
 }
 
 
-function AccountStateComponent({ publicKey, accountHash }: { publicKey: string, accountHash: Hash}) {
+function AccountStateComponent({ publicKey, accountHash }: { publicKey: string, accountHash: Uint8Array}) {
     const blockchain = useBlockchain();
     const {value, loading, error} = useAsync(async () => {
-        return blockchain.getAccountState(accountHash)
+        const state = await blockchain.getAccountState(accountHash);
+        const balance = new BalanceAvailability(
+            state.balance,
+            state.locks
+        )
+        balance.getBreakdown();
+        return balance;
     });
 
     if (loading) {
@@ -118,11 +131,18 @@ function AccountStateComponent({ publicKey, accountHash }: { publicKey: string, 
                 </div>
 
                 <div className="mt-6 md:mt-0">
-                    <h3 className="text-lg font-semibold text-gray-800 mb-4 text-center md:text-right">Account State</h3>
-                    <div className="space-y-4">
+                    <div className="space-x-4 flex flex-row">
                         <div className="p-4 bg-gray-50 rounded-lg">
                             <p className="text-sm text-gray-500 mb-1">Balance</p>
                             <p className="text-2xl font-bold text-blue-600">{value.getBalance().toString()}</p>
+                        </div>
+                        <div className="p-4 bg-gray-50 rounded-lg">
+                            <p className="text-sm text-gray-500 mb-1">Vested</p>
+                            <p className="text-2xl font-bold text-blue-600">{value.getVested().toString()}</p>
+                        </div>
+                        <div className="p-4 bg-gray-50 rounded-lg">
+                            <p className="text-sm text-gray-500 mb-1">Stacked</p>
+                            <p className="text-2xl font-bold text-blue-600">{value.getStaked().toString()}</p>
                         </div>
                     </div>
                 </div>
@@ -132,10 +152,12 @@ function AccountStateComponent({ publicKey, accountHash }: { publicKey: string, 
 }
 
 
-function AccountTransactionsHistory({ publicKey, accountHash }: { publicKey: string, accountHash: Hash}) {
+function AccountTransactionsHistory({ publicKey, accountHash }: { publicKey: string, accountHash: Uint8Array}) {
     const blockchain = useBlockchain();
     const {value: transactions, loading, error} = useAsync(async () => {
-        return blockchain.getAccountHistory(accountHash)
+        const state =  await blockchain.getAccountState(accountHash)
+        const response = await blockchain.getAccountHistory(accountHash, state.lastHistoryHash, 100);
+        return AccountTransactions.createFromAbciResponse(response);
     });
     if (loading) {
         return (
@@ -194,13 +216,13 @@ function AccountTransactionsHistory({ publicKey, accountHash }: { publicKey: str
                         </tr>
                     </thead>
                     <tbody className="bg-white divide-y divide-gray-200">
-                        {transactions.getAllTransactions().map((transaction, i) => (
+                        {transactions.getTransactions().map((transaction, i) => (
                             <tr key={i} className={`${i % 2 === 0 ? 'bg-white' : 'bg-gray-50'} hover:bg-blue-50 transition-colors duration-150`}>
                                 <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">{transaction.getHeight()}</td>
                                 <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-700">{transaction.transferredAt().toLocaleString()}</td>
                                 <td className="px-6 py-4 whitespace-nowrap text-sm">
                                     <span className={`px-2 py-1 inline-flex text-xs leading-5 font-semibold rounded-full ${
-                                        transaction.isPositive() 
+                                        transaction.isPositive()
                                             ? 'bg-green-100 text-green-800' 
                                             : 'bg-red-100 text-red-800'
                                     }`}>

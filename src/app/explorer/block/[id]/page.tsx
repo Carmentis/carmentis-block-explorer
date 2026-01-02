@@ -5,8 +5,10 @@ import {useParams, useRouter} from "next/navigation";
 import useSWR from "swr";
 import {useAtomValue} from "jotai";
 import {networkAtom} from "@/atoms/network.atom";
-import {BlockchainFacade} from "@cmts-dev/carmentis-sdk/client";
+import {Provider, Utils, Hash} from '@cmts-dev/carmentis-sdk/client';
 import TableMicroBlocks from "@/app/components/table-micro-blocks";
+import {useBlockchain} from "@/app/layout";
+import {useAsync} from "react-use";
 
 export default function MasterBlockExplorer() {
     const params = useParams<{id: string}>();
@@ -20,18 +22,19 @@ export default function MasterBlockExplorer() {
     );
 }
 
-async function loadBlock([, client, h]: [string, BlockchainFacade, number]) {
-    const info = await client.getBlockInformation(h);
-    const content = await client.getBlockContent(h);
-    return {info, content}
+async function loadBlock([, client, h]: [string, Provider, number]) {
+
 
 }
 
 function MasterBlock({ id }: { id: number }) {
-    const network = useAtomValue(networkAtom);
-    const client = BlockchainFacade.createFromNodeUrl(network);
+    const provider = useBlockchain();
     const router = useRouter();
-    const { data, isLoading, error } = useSWR(["getCurrentHeight", client, id], loadBlock);
+    const { value: data, loading: isLoading, error } = useAsync(async () => {
+        const info = await provider.getBlockInformation(id);
+        const content = await provider.getBlockContent(id);
+        return {info, content}
+    })
 
     if (isLoading) {
         return (
@@ -78,15 +81,15 @@ function MasterBlock({ id }: { id: number }) {
                         <div className="space-y-3">
                             <div>
                                 <p className="text-sm text-gray-500">Proposer</p>
-                                <p className="font-medium">{info.getProposerNode().encode()}</p>
+                                <p className="font-medium">{Utils.binaryToHexa(info.proposerAddress)}</p>
                             </div>
                             <div>
                                 <p className="text-sm text-gray-500">Proposed At</p>
-                                <p className="font-medium">{info.anchoredAt().toLocaleString()}</p>
+                                <p className="font-medium">{new Date(info.timestamp * 1000).toLocaleString()}</p>
                             </div>
                             <div>
                                 <p className="text-sm text-gray-500">Number of Microblocks</p>
-                                <p className="font-medium">{content.numberOfContainedMicroBlocks()}</p>
+                                <p className="font-medium">{content.microblocks.length}</p>
                             </div>
                         </div>
                     </div>
@@ -100,7 +103,7 @@ function MasterBlock({ id }: { id: number }) {
                     <p className="text-gray-600 mb-6">
                         This block contains the following microblocks. Click on a microblock to view its details.
                     </p>
-                    <TableMicroBlocks hashes={content.getContainedMicroBlockHashes()} />
+                    <TableMicroBlocks hashes={content.microblocks.map(mbHash => Hash.from(mbHash.hash))} />
                 </div>
             </div>
 

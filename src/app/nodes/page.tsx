@@ -9,20 +9,31 @@ import useSWR from "swr";
 import {PageTitle} from "@/app/components/pagetitle";
 import {useBlockchain} from "@/app/layout";
 import {useAsync} from "react-use";
-import {configure, getConsoleSink} from "@logtape/logtape";
+import {configureSync, getConsoleSink} from "@logtape/logtape";
 import {useEffect} from "react";
+import OrganizationLinkCell from "@/components/tableCells/OrganizationLinkCell";
 
+
+
+if (typeof window !== "undefined") {
+    console.log("Client")
+    configureSync({
+        reset: true,
+        sinks: { console: getConsoleSink({
+                console: window.console
+            }) },
+        loggers: [
+            { category: "@cmts-dev/carmentis-sdk", lowestLevel: "debug", sinks: ["console"] }
+        ]
+    })
+}
 
 export default function ValidatorNodes() {
 
-    useEffect(() => {
-        configure({
-            sinks: { console: getConsoleSink() },
-            loggers: [
-                { category: "@cmts-dev/carmentis-sdk", lowestLevel: "fatal", sinks: ["console"] }
-            ]
-        })
-    }, []);
+
+    const logger = Logger.getLogger(["explorer"]);
+    logger.info("Test info")
+    logger.debug("Test debug")
 
     const provider = useBlockchain();
     const { value: data, loading, error } = useAsync(async () => {
@@ -31,25 +42,17 @@ export default function ValidatorNodes() {
     })
 
     const renderRow = async (hash:Hash) => {
-        console.log("Loading vb id")
         const validator = await provider.loadValidatorNodeVirtualBlockchain(hash);
         const validatorState = validator.getInternalState();
-        console.log(validatorState)
         const org = await validator.getOrganizationVirtualBlockchain()
         const orgDesc = await org.getDescription()
-        /*
-
-        const organizationId = validator.getOrganizationId();
-        const organization = await  provider.loadOrganization(organizationId);
-        const accountHash = await provider.getAccountHashFromPublicKey(organization.getPublicKey());
-        const rpcEndpoint = validator.getRpcEndpoint();
-
-         */
+        const pkDeclaration = await validator.getCometbftPublicKeyDeclaration();
+        const endpointDeclaration = await validator.getRpcEndpointDeclaration();
         return [
-            <>{orgDesc.name}</>,
-            <>{}</>,
-            <>{}</>,
-            <>{}</>,
+            <OrganizationLinkCell orgId={org.getIdentifier()} orgName={orgDesc.name}/>,
+            <>{endpointDeclaration}</>,
+            <>{validatorState.getLastKnownVotingPower()}</>,
+            <>{pkDeclaration.cometbftPublicKey}</>,
         ]
     }
 
