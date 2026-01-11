@@ -1,3 +1,10 @@
+## [1.0.1](https://github.com/Carmentis/carmentis-block-explorer/compare/v1.0.0...v1.0.1) (2026-01-11)
+
+
+### Bug Fixes
+
+* **ci:** missing package write token ([37db5b4](https://github.com/Carmentis/carmentis-block-explorer/commit/37db5b46808e42c01b81a2986e5755d7bc589da7))
+
 # 1.0.0 (2026-01-10)
 
 
