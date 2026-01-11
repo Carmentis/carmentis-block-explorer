@@ -1,7 +1,6 @@
 'use client'
 
 import {useEffect, useState} from 'react';
-import {Blockchain, ProviderFactory} from "@cmts-dev/carmentis-sdk/client";
 import {useAtomValue} from 'jotai';
 import {networkAtom} from "@/atoms/network.atom";
 import {Tooltip} from "@mui/material";
@@ -19,7 +18,7 @@ export function NodeConnectionStatus() {
     const network = useAtomValue(networkAtom);
     const blockchain = useBlockchain();
     const {value: status, loading, error} = useAsync(async () => {
-        return await blockchain.getNodeStatus()
+        return await blockchain.getNodeStatus(network)
     }, [network]);
 
 
@@ -39,19 +38,19 @@ export function NodeConnectionStatus() {
                     <TableBody>
                         <TableRow>
                             <TableCell>Chain ID</TableCell>
-                            <TableCell>{status.getChainId()}</TableCell>
+                            <TableCell>{status.result.node_info.network}</TableCell>
                         </TableRow>
                         <TableRow>
                             <TableCell>Node Public Key</TableCell>
-                            <TableCell>{status.getCometBFTNodePublicKey() || 'N/A'}</TableCell>
+                            <TableCell>--</TableCell>
                         </TableRow>
                         <TableRow>
                             <TableCell>Public Key Type</TableCell>
-                            <TableCell>{status.getCometBFTNodePublicKeyType() || 'N/A'}</TableCell>
+                            <TableCell>--</TableCell>
                         </TableRow>
                         <TableRow>
                             <TableCell>Node Name</TableCell>
-                            <TableCell>{status.getNodeName() || 'N/A'}</TableCell>
+                            <TableCell>{status.result.node_info.moniker}</TableCell>
                         </TableRow>
                     </TableBody>
                 </Table>
@@ -80,7 +79,7 @@ export function NodeConnectionStatus() {
                         {loading
                             ? 'Checking...' 
                             : status
-                                ? `Connected to ${status.getChainId()}`
+                                ? `Connected to ${status.result.node_info.network}`
                                 : 'Disconnected'}
                     </span>
                 </div>

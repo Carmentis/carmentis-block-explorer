@@ -10,7 +10,6 @@ import {ErrorDisplay} from "@/app/components/error-display";
 import {useSearchParams} from "next/navigation";
 import useVirtualBlockchainSearchStrategy from "@/app/explorer/searchStrategies/useVirtualBlockchainSearchStrategy";
 import useMicroBlockSearchStrategy from "@/app/explorer/searchStrategies/useMicroBlockSearchStrategy";
-import useAccountSearchStrategy from "@/app/explorer/searchStrategies/useAccountSearchStrategy";
 import LayersIcon from "@mui/icons-material/Layers";
 import GridViewIcon from "@mui/icons-material/GridView";
 import HubIcon from "@mui/icons-material/Hub";
@@ -99,9 +98,9 @@ function handleVirtualBlockchainSearchResultDisplay(search: string) {
         <Stack spacing={1}>
             <Stack spacing={0.5}>
                 <Typography variant="body2" color="text.secondary">VB ID</Typography>
-                <Typography variant="h6" sx={{ wordBreak: 'break-all' }}>{value.getVbId().encode()}</Typography>
+                <Typography variant="h6" sx={{ wordBreak: 'break-all' }}>{search}</Typography>
             </Stack>
-            <Button component={Link} href={routes.explorer.virtualBlockchain(value.getVbId().encode())} variant="contained" size="small">
+            <Button component={Link} href={routes.explorer.virtualBlockchain(search)} variant="contained" size="small">
                 Open
             </Button>
         </Stack>
@@ -197,6 +196,10 @@ function handleBlockResultDisplay(search: string) {
 }
 
 function handleAccountSearchDisplay(search: string) {
+    return  (
+        <ResultCard title="Account" icon={<AccountBalanceWalletIcon />} loading={false} empty emptyLabel="Paste a public key to see account balance" />
+    );
+    /*
     const { value, loading, error } = useAccountSearchStrategy(search);
     const isEmptyQuery = !search?.trim();
 
@@ -240,5 +243,7 @@ function handleAccountSearchDisplay(search: string) {
             {content}
         </ResultCard>
     );
+
+     */
 }
 

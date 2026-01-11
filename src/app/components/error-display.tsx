@@ -1,5 +1,4 @@
 export const ErrorDisplay = ({error}: {error: unknown}) => {
-    console.error(error);
     return (
         <div className="flex justify-center items-center min-h-[50vh]">
             <div className="bg-white rounded-lg shadow-md p-6 max-w-md w-full text-center">

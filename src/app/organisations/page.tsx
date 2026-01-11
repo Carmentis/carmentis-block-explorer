@@ -29,27 +29,6 @@ export default function OrganisationsPage() {
             <>{orgDesc.city} ({orgDesc.countryCode})</>,
             <>{orgDesc.website}</>,
         ]
-        /*
-        const organisation = await blockchain.loadOrganization(organisationId);
-        const publicKey = organisation.getPublicKey();
-        const sigEncoder = StringSignatureEncoder.defaultStringSignatureEncoder();
-        const pk = sigEncoder.encodePublicKey(publicKey);
-        const accountHash = await blockchain.getAccountHashFromPublicKey(publicKey);
-        const balance = await blockchain.getAccountBalance(accountHash);
-        return [
-            <>{organisation.getName()}</>,
-            <>{organisationId.encode()}</>,
-            <>{`${organisation.getCity()} (${organisation.getCountryCode()})`}</>,
-            <>{organisation.getWebsite()}</>,
-            <>
-                <Tooltip title={pk}>
-                    <>{pk.slice(0, 20)}...{pk.slice(-20)}</>
-                </Tooltip>,
-            </>,
-            <>{balance.toString()}</>
-        ]
-
-         */
     }
 
 

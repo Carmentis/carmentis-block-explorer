@@ -13,21 +13,6 @@ import {configureSync, getConsoleSink} from "@logtape/logtape";
 import {useEffect} from "react";
 import OrganizationLinkCell from "@/components/tableCells/OrganizationLinkCell";
 
-
-
-if (typeof window !== "undefined") {
-    console.log("Client")
-    configureSync({
-        reset: true,
-        sinks: { console: getConsoleSink({
-                console: window.console
-            }) },
-        loggers: [
-            { category: "@cmts-dev/carmentis-sdk", lowestLevel: "debug", sinks: ["console"] }
-        ]
-    })
-}
-
 export default function ValidatorNodes() {
 
 
@@ -48,10 +33,11 @@ export default function ValidatorNodes() {
         const orgDesc = await org.getDescription()
         const pkDeclaration = await validator.getCometbftPublicKeyDeclaration();
         const endpointDeclaration = await validator.getRpcEndpointDeclaration();
+        const lastKnownVotingPower = validatorState.getLastKnownApprovalStatus()
         return [
             <OrganizationLinkCell orgId={org.getIdentifier()} orgName={orgDesc.name}/>,
             <>{endpointDeclaration}</>,
-            <>{validatorState.getLastKnownVotingPower()}</>,
+            <>{lastKnownVotingPower ? "Validator" : "Replicator"}</>,
             <>{pkDeclaration.cometbftPublicKey}</>,
         ]
     }

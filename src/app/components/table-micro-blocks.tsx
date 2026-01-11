@@ -2,9 +2,8 @@ import {useRouter} from "next/navigation";
 import {Hash} from "@cmts-dev/carmentis-sdk/client";
 import {DynamicTableComponent} from "@/components/table.component";
 import {useBlockchain} from "@/app/layout";
-import {useAtomValue} from "jotai";
-import {networkAtom} from "@/atoms/network.atom";
 import {TableCell, TableRow} from "@mui/material";
+import {ReactNode} from "react";
 
 export type TableMicroBlocksProps = {
     hashes: Hash[]
@@ -13,10 +12,10 @@ export default function TableMicroBlocks(props: TableMicroBlocksProps) {
     const router = useRouter();
     const provider = useBlockchain();
 
-    async function renderMicroBlock( hash: Hash ) {
+    async function renderMicroBlock( hash: Hash ) : Promise<ReactNode[]>  {
         //const c = await sdk.blockchain.blockchainQuery.getMicroblockContent(data.[hash])
         const mb = await provider.loadMicroblockByMicroblockHash(hash);
-        if (mb === null) return <>An error occurred: Microblock not found</>
+        if (mb === null) throw new Error("Microblock not found");
         const microBlockHash = hash.encode();
 
 

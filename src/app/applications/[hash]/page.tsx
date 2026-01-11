@@ -3,10 +3,11 @@
 
 import {useParams} from "next/navigation";
 import {
-    ApplicationDescription,
-    ApplicationWrapper,
-    Hash, OrganizationWrapper,
-    OrganizationDescription
+    ApplicationDescriptionSection,
+    Hash,
+    OrganizationDescriptionSection,
+    ApplicationVb,
+    OrganizationVb,
 } from '@cmts-dev/carmentis-sdk/client';
 import useSWR from "swr";
 import Skeleton from "react-loading-skeleton";
@@ -40,10 +41,13 @@ export default function Application() {
     const hash = Hash.from(params.hash);
     const blockchain = useBlockchain();
     const {value: data, loading: isLoading, error} = useAsync(async () => {
-        const application = await blockchain.loadApplication(hash);
+        const application = await blockchain.loadApplicationVirtualBlockchain(hash);
         const organisationId = application.getOrganizationId();
-        const organisation = await blockchain.loadOrganization(organisationId);
-        return {organisation, application};
+        const organisation = await blockchain.loadOrganizationVirtualBlockchain(organisationId);
+        return {
+            organisation: await organisation.getDescription(),
+            application: await application.getApplicationDescription(),
+        };
     });
 
 
@@ -61,21 +65,21 @@ export default function Application() {
 }
 
 
-function ApplicationDescriptionComponent({id, application, organisation}: { id: Hash, application: ApplicationWrapper, organisation: OrganizationWrapper } ) {
+function ApplicationDescriptionComponent({id, application, organisation}: { id: Hash, application: ApplicationDescriptionSection, organisation: OrganizationDescriptionSection } ) {
 
     const items = [
-        { label: "Name", value: application.getName() },
+        { label: "Name", value: application.name },
         { label: "Id", value: id.encode() },
-        { label: "Description", value: application.getDescription() },
-        { label: "Website", value: application.getWebsite()},
-        { label: "Logo URL", value: application.getLogoUrl() },
-        { label: "Organisation", value: organisation.getName() },
+        { label: "Description", value: application.description },
+        { label: "Website", value: application.homepageUrl},
+        { label: "Logo URL", value: application.logoUrl },
+        { label: "Organisation", value: organisation.name },
     ]
     return (
         <Container>
             <Card sx={{  padding: 2, boxShadow: 3}}>
                 <CardContent>
-                    <Typography variant={"h5"}>{application.getName()}</Typography>
+                    <Typography variant={"h5"}>{application.name}</Typography>
                     <Table>
                         <TableBody>
                             {items.map((item, index) => (

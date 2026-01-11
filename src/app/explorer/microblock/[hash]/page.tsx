@@ -7,9 +7,6 @@ import {
     SectionLabel,
     Utils
 } from "@cmts-dev/carmentis-sdk/client";
-import useSWR from "swr";
-import {useAtomValue} from "jotai/index";
-import {networkAtom} from "@/atoms/network.atom";
 import Link from "next/link";
 import {PageTitle} from "@/app/components/pagetitle";
 import {useBlockchain} from "@/app/layout";
