@@ -9,10 +9,11 @@ import {networkAtom} from "@/atoms/network.atom";
 import {PageTitle} from "@/app/components/pagetitle";
 import Link from "next/link";
 import {useBlockchain} from "@/app/layout";
+import {Hash, ImportedProof, JsonData, ProofDocument} from "@cmts-dev/carmentis-sdk/client";
 
 export default function ProofChecker() {
 
-    const [proof, setProof] = useState<Record<string, any> | undefined>();
+    const [proof, setProof] = useState<ProofDocument | undefined>();
     return (
         <div className="space-y-6">
             <PageTitle title="Proof Checker" />
@@ -54,7 +55,7 @@ function ProofCheckerFailure({ error }: { error: Error }) {
 
 
 
-function ProofCheckerUpload({onUpload}: { onUpload: (proof: any) => void }) {
+function ProofCheckerUpload({onUpload}: { onUpload: (proof: ProofDocument) => void }) {
     const fileInputRef = useRef<HTMLInputElement | null>(null);
     const [isDragging, setIsDragging] = useState(false);
     const [error, setError] = useState<string | null>(null);
@@ -76,7 +77,8 @@ function ProofCheckerUpload({onUpload}: { onUpload: (proof: any) => void }) {
             reader.onload = (e) => {
                 try {
                     const content = JSON.parse(e.target?.result as string);
-                    onUpload(content);
+                    const proofDocument = ProofDocument.fromObject(content)
+                    onUpload(proofDocument);
                 } catch (error) {
                     console.error(error);
                     setError("Invalid JSON file. Please upload a valid JSON file.");
@@ -165,10 +167,28 @@ function ProofCheckerUpload({onUpload}: { onUpload: (proof: any) => void }) {
     );
 }
 
-function ProofViewer({proof, resetProof}: {resetProof: () => void, proof: Record<string, any>}) {
-    const blockchain = useBlockchain()
+function ProofViewer({proof, resetProof}: {resetProof: () => void, proof: ProofDocument}) {
+
+    const blockchain = useBlockchain();
     const state = useAsync(async () => {
-        const verificationResult = await blockchain.verifyProofFromJson(proof as any);
+        // we currently support only one proof document for a single virtual blockchain
+        const proofDocumentVBs = proof.getVirtualBlockchains();
+        if (proofDocumentVBs.length !== 1) {
+            throw new Error("Proof document contains multiple virtual blockchains. Only one virtual blockchain is supported.");
+        }
+        const proofDocumentVB = proofDocumentVBs[0];
+        const vbId = proofDocumentVB.getIdentifier();
+        const appLedgerId = Hash.fromHex(vbId);
+        const appLedgerVb = await blockchain.loadApplicationLedgerVirtualBlockchain(appLedgerId);
+        const importedProofs = await appLedgerVb.importProof(proof.getObject());
+        return {
+            proofDocumentVB,
+            appLedgerId: vbId,
+            appLedgerVb,
+            importedProofs
+        }
+
+        /*
         const heights = verificationResult.getInvolvedBlockHeights();
         const records = await Promise.all(
             heights.map(async (blockHeight: number) => {
@@ -177,6 +197,8 @@ function ProofViewer({proof, resetProof}: {resetProof: () => void, proof: Record
             })
         );
         return { verificationResult, records };
+
+         */
     });
 
     if (state.loading) {
@@ -210,11 +232,12 @@ function ProofViewer({proof, resetProof}: {resetProof: () => void, proof: Record
         );
     }
 
-    const {verificationResult, records} = state.value;
-    const header = proof.info;
-    console.log(proof, header)
-    const appLedgerId = verificationResult.getApplicationLedgerId().encode();
-    const verified = verificationResult.isVerified();
+    const { appLedgerId, appLedgerVb, importedProofs } = state.value;
+    const verified = true; // at this step, the proof has been successfully verified
+    const title = proof.getTitle();
+    const author = proof.getAuthor();
+    const exportedAt = proof.getDate().toLocaleString();
+    const records = importedProofs;
     return (
         <div className="space-y-6">
             <div className="flex justify-between items-center">
@@ -249,18 +272,18 @@ function ProofViewer({proof, resetProof}: {resetProof: () => void, proof: Record
                             </div>
                             <div>
                                 <p className="text-sm text-gray-500">Proof Title</p>
-                                <p className="font-medium">{header.title}</p>
+                                <p className="font-medium">{title}</p>
                             </div>
                             <div>
                                 <p className="text-sm text-gray-500">Proof Export Time</p>
-                                <p className="font-medium">{new Date(header.date).toLocaleString()}</p>
+                                <p className="font-medium">{exportedAt}</p>
                             </div>
                         </div>
                         <div className="space-y-4">
                             <div>
                                 <p className="text-sm text-gray-500">Virtual Blockchain ID</p>
                                 <Link 
-                                    href={`/explorer/virtualBlockchain/${appLedgerId}`} 
+                                    href={`/explorer/virtualBlockchain/${appLedgerId}`}
                                     target="_blank"
                                     className="text-blue-600 hover:text-blue-800 font-mono text-sm break-all"
                                 >
@@ -269,7 +292,7 @@ function ProofViewer({proof, resetProof}: {resetProof: () => void, proof: Record
                             </div>
                             <div>
                                 <p className="text-sm text-gray-500">Author</p>
-                                <p className="font-medium">{header.author}</p>
+                                <p className="font-medium">{author}</p>
                             </div>
                         </div>
                     </div>
@@ -282,7 +305,7 @@ function ProofViewer({proof, resetProof}: {resetProof: () => void, proof: Record
 }
 
 
-function ProofRecordViewer({records}: {records: {height: number, record: any}[]}) {
+function ProofRecordViewer({records}: {records: ImportedProof[]}) {
     return (
         <div className="mt-8">
             <h3 className="text-xl font-semibold text-gray-800 mb-6">Proof Data Visualization</h3>
@@ -306,7 +329,7 @@ function ProofRecordViewer({records}: {records: {height: number, record: any}[]}
                                         </span>
                                         Block {record.height}
                                     </h4>
-                                    <BlockViewer initialPath={[]} data={record.record} />
+                                    <BlockViewer initialPath={[]} data={record.data} />
                                 </div>
                             </div>
                         </div>
@@ -317,7 +340,7 @@ function ProofRecordViewer({records}: {records: {height: number, record: any}[]}
     );
 }
 
-function BlockViewer({data, initialPath}: {data: Record<string, any>, initialPath: string[]}) {
+function BlockViewer({data, initialPath}: {data: JsonData, initialPath: string[]}) {
     const [path, setPath] = useState(initialPath);
     const [shownData, setShowData] = useState(data);
 
@@ -325,6 +348,8 @@ function BlockViewer({data, initialPath}: {data: Record<string, any>, initialPat
         // compute the shown data
         let shownData = data;
         for (const token of path) {
+            // TODO: check
+            // @ts-expect-error
             shownData = shownData[token];
         }
         setShowData(shownData);
@@ -435,7 +460,12 @@ function BlockViewer({data, initialPath}: {data: Record<string, any>, initialPat
             <div className="overflow-x-auto">
                 <table className="min-w-full divide-y divide-gray-200">
                     <tbody className="bg-white divide-y divide-gray-200">
-                        {Object.entries(shownData).map(([key, value], i) => renderEntry(i, key, value))}
+                        {
+                            // TODO: check
+                            // @ts-expect-error
+                            Object.entries(shownData)
+                                .map(([key, value], i) => renderEntry(i, key, value))
+                        }
                     </tbody>
                 </table>
             </div>
