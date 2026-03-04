@@ -1,3 +1,10 @@
+## [1.0.2](https://github.com/Carmentis/carmentis-block-explorer/compare/v1.0.1...v1.0.2) (2026-03-04)
+
+
+### Bug Fixes
+
+* voting power display ([fd45f0e](https://github.com/Carmentis/carmentis-block-explorer/commit/fd45f0e1ba280a3459fc2681ceca8849f183a8cb))
+
 ## [1.0.1](https://github.com/Carmentis/carmentis-block-explorer/compare/v1.0.0...v1.0.1) (2026-01-11)
 
 
