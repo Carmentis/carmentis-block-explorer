@@ -1,6 +1,6 @@
 'use client';
 
-import {Hash, Logger} from "@cmts-dev/carmentis-sdk/client";
+import {Hash, Logger, BalanceAvailability, CMTSToken} from "@cmts-dev/carmentis-sdk/client";
 import Skeleton from "react-loading-skeleton";
 import TableComponent, {DynamicTableComponent} from "@/components/table.component";
 import {useAtomValue} from "jotai/index";
@@ -31,13 +31,19 @@ export default function ValidatorNodes() {
         const validatorState = validator.getInternalState();
         const org = await validator.getOrganizationVirtualBlockchain()
         const orgDesc = await org.getDescription()
+        const ownerAccountId = await org.getVirtualBlockchainOwnerId();
+        const ownerAccount = await provider.getAccountState(ownerAccountId.toBytes());
+        const balanceAvailability = new BalanceAvailability(ownerAccount.balance, ownerAccount.locks);
+        const stakingLock = balanceAvailability.getNodeStakingLock(hash.toBytes());
+        const stakedAmountInAtomics = stakingLock === undefined ? 0 : stakingLock.lockedAmountInAtomics;
+        const stakedAmount = CMTSToken.createAtomic(stakedAmountInAtomics);
         const pkDeclaration = await validator.getCometbftPublicKeyDeclaration();
         const endpointDeclaration = await validator.getRpcEndpointDeclaration();
-        const lastKnownVotingPower = validatorState.getLastKnownApprovalStatus()
+//      const lastKnownVotingPower = validatorState.getLastKnownApprovalStatus();
         return [
             <OrganizationLinkCell orgId={org.getIdentifier()} orgName={orgDesc.name}/>,
             <>{endpointDeclaration}</>,
-            <>{lastKnownVotingPower ? "Validator" : "Replicator"}</>,
+            <>{stakedAmount.getAmount()}</>,
             <>{pkDeclaration.cometbftPublicKey}</>,
         ]
     }
